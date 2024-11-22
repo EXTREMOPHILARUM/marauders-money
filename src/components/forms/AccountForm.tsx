@@ -61,9 +61,19 @@ export const AccountForm: React.FC<AccountFormProps> = ({
 
   const handleSubmit = () => {
     if (validate()) {
+      const numericBalance = parseFloat(formData.balance.replace(/[^0-9.-]+/g, ''));
+      if (isNaN(numericBalance)) {
+        setErrors(prev => ({ ...prev, balance: 'Invalid balance amount' }));
+        return;
+      }
+
       onSubmit({
-        ...formData,
-        balance: parseFloat(formData.balance.replace(/[^0-9.-]+/g, '')),
+        name: formData.name.trim(),
+        type: formData.type,
+        balance: numericBalance,
+        currency: formData.currency,
+        institution: formData.institution?.trim(),
+        notes: formData.notes?.trim(),
       });
     }
   };
@@ -124,7 +134,8 @@ export const AccountForm: React.FC<AccountFormProps> = ({
         onPress={handleSubmit}
         loading={isLoading}
         variant="primary"
-        className="w-full bg-primary-600 active:bg-primary-700"
+        className="w-full bg-primary-600 active:bg-primary-700 disabled:opacity-50"
+        disabled={isLoading}
       />
     </View>
   );

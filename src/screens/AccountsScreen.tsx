@@ -27,11 +27,20 @@ interface Account {
   lastUpdated: number;
 }
 
+const generateUUID = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 const AccountsScreen = () => {
-  const { database, isLoading } = useApp();
+  const { database, isLoading: dbLoading } = useApp();
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchAccounts = async () => {
     if (!database) return;
@@ -57,14 +66,32 @@ const AccountsScreen = () => {
   const handleAddAccount = async (accountData: Omit<Account, 'id' | 'lastUpdated'>) => {
     if (!database) return;
     
-    await database.accounts.insert({
-      ...accountData,
-      lastUpdated: Date.now(),
-      createdAt: Date.now(),
-    });
-    
-    setShowForm(false);
-    fetchAccounts();
+    try {
+      setIsSubmitting(true);
+      
+      const id = generateUUID();
+      const now = Date.now();
+      
+      const newAccount = {
+        id, // Primary key must be set explicitly
+        name: accountData.name.trim(),
+        type: accountData.type,
+        balance: accountData.balance,
+        currency: accountData.currency,
+        institution: accountData.institution?.trim() || '',
+        notes: accountData.notes?.trim() || '',
+        createdAt: now,
+        updatedAt: now,
+      };
+      
+      await database.accounts.insert(newAccount);
+      await fetchAccounts();
+      setShowForm(false);
+    } catch (error) {
+      console.error('Failed to add account:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   useEffect(() => {
@@ -74,7 +101,7 @@ const AccountsScreen = () => {
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
   const totalAccounts = accounts.length;
 
-  if (isLoading) {
+  if (dbLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
         <Text className="text-lg text-neutral-700">Loading...</Text>
@@ -196,7 +223,7 @@ const AccountsScreen = () => {
                 <View className="p-6">
                   <AccountForm
                     onSubmit={handleAddAccount}
-                    isLoading={isLoading}
+                    isLoading={isSubmitting}
                   />
                 </View>
               </ScrollView>
