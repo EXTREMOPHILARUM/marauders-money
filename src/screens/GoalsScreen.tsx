@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Modal } from 'react-native';
 import { useApp } from '../context/AppContext';
+import { GoalForm } from '../components/forms/GoalForm';
+import { ProgressBar } from '../components/charts/ProgressBar';
 
 interface Goal {
   id: string;
@@ -8,6 +10,9 @@ interface Goal {
   targetAmount: number;
   currentAmount: number;
   deadline: number;
+  category: 'savings' | 'debt' | 'investment' | 'purchase';
+  priority: 'low' | 'medium' | 'high';
+  notes?: string;
   status: string;
 }
 
@@ -15,6 +20,7 @@ const GoalsScreen = () => {
   const { database, isLoading } = useApp();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   const fetchGoals = async () => {
     if (!database) return;
@@ -25,6 +31,9 @@ const GoalsScreen = () => {
       targetAmount: goal.targetAmount,
       currentAmount: goal.currentAmount || 0,
       deadline: goal.deadline,
+      category: goal.category || 'savings',
+      priority: goal.priority || 'medium',
+      notes: goal.notes,
       status: goal.status || 'in_progress',
     })));
   };
@@ -39,16 +48,26 @@ const GoalsScreen = () => {
     fetchGoals();
   }, [database]);
 
-  const getProgressColor = (current: number, target: number) => {
-    const progress = (current / target) * 100;
-    if (progress >= 100) return 'bg-success';
-    if (progress >= 75) return 'bg-primary';
-    if (progress >= 50) return 'bg-warning';
-    return 'bg-danger';
+  const handleSubmitGoal = async (goalData: Omit<Goal, 'id' | 'status'>) => {
+    if (!database) return;
+    
+    await database.goals.insert({
+      ...goalData,
+      status: 'in_progress',
+      createdAt: Date.now(),
+    });
+    
+    setShowForm(false);
+    fetchGoals();
   };
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString();
+  const getPriorityColor = (priority: Goal['priority']) => {
+    switch (priority) {
+      case 'high': return 'bg-red-500';
+      case 'medium': return 'bg-yellow-500';
+      case 'low': return 'bg-green-500';
+      default: return 'bg-gray-500';
+    }
   };
 
   if (isLoading) {
@@ -68,7 +87,10 @@ const GoalsScreen = () => {
         }
       >
         {/* Add Goal Button */}
-        <TouchableOpacity className="m-4 bg-primary p-4 rounded-lg">
+        <TouchableOpacity 
+          className="m-4 bg-primary p-4 rounded-lg"
+          onPress={() => setShowForm(true)}
+        >
           <Text className="text-white text-center font-bold">Create New Goal</Text>
         </TouchableOpacity>
 
@@ -82,7 +104,6 @@ const GoalsScreen = () => {
           ) : (
             goals.map((goal) => {
               const progress = (goal.currentAmount / goal.targetAmount) * 100;
-              const progressColor = getProgressColor(goal.currentAmount, goal.targetAmount);
               const remaining = goal.targetAmount - goal.currentAmount;
 
               return (
@@ -91,10 +112,15 @@ const GoalsScreen = () => {
                   className="bg-surface rounded-lg p-4 shadow-sm mb-3"
                 >
                   <View className="flex-row justify-between items-center mb-2">
-                    <Text className="text-lg font-bold text-text">{goal.name}</Text>
-                    <Text className="text-sm text-text opacity-70">
-                      Due: {formatDate(goal.deadline)}
-                    </Text>
+                    <View className="flex-1">
+                      <Text className="text-lg font-bold text-text">{goal.name}</Text>
+                      <Text className="text-sm text-text opacity-70">
+                        Due: {new Date(goal.deadline).toLocaleDateString()}
+                      </Text>
+                    </View>
+                    <View className={`px-2 py-1 rounded ${getPriorityColor(goal.priority)}`}>
+                      <Text className="text-white text-xs capitalize">{goal.priority}</Text>
+                    </View>
                   </View>
 
                   <View className="mb-2">
@@ -104,12 +130,12 @@ const GoalsScreen = () => {
                         ${goal.currentAmount.toFixed(2)} / ${goal.targetAmount.toFixed(2)}
                       </Text>
                     </View>
-                    <View className="w-full h-2 bg-gray-200 rounded-full">
-                      <View 
-                        className={`h-full ${progressColor} rounded-full`}
-                        style={{ width: `${Math.min(progress, 100)}%` }}
-                      />
-                    </View>
+                    <ProgressBar 
+                      progress={progress} 
+                      color={goal.category === 'savings' ? '#10B981' : 
+                             goal.category === 'debt' ? '#EF4444' : 
+                             goal.category === 'investment' ? '#3B82F6' : '#8B5CF6'}
+                    />
                   </View>
 
                   <View className="flex-row justify-between">
@@ -120,12 +146,47 @@ const GoalsScreen = () => {
                       ${remaining.toFixed(2)} remaining
                     </Text>
                   </View>
+
+                  {goal.notes && (
+                    <Text className="text-sm text-text opacity-70 mt-2 italic">
+                      {goal.notes}
+                    </Text>
+                  )}
                 </TouchableOpacity>
               );
             })
           )}
         </View>
       </ScrollView>
+
+      {/* Goal Form Modal */}
+      <Modal
+        visible={showForm}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowForm(false)}
+      >
+        <View className="flex-1 bg-black bg-opacity-50 justify-end">
+          <View className="bg-surface rounded-t-3xl">
+            <View className="p-4 border-b border-gray-200">
+              <Text className="text-xl font-bold text-text text-center">Create New Goal</Text>
+              <TouchableOpacity
+                className="absolute right-4 top-4"
+                onPress={() => setShowForm(false)}
+              >
+                <Text className="text-primary text-lg">Cancel</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View className="p-4">
+              <GoalForm
+                onSubmit={handleSubmitGoal}
+                isLoading={isLoading}
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
