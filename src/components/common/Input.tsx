@@ -1,94 +1,52 @@
 import React, { forwardRef } from 'react';
 import {
-  StyleSheet,
   Text,
   TextInput,
   TextInputProps,
   View,
-  StyleProp,
-  ViewStyle,
 } from 'react-native';
 
 interface InputProps extends TextInputProps {
   label?: string;
   error?: string;
-  containerStyle?: StyleProp<ViewStyle>;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  className?: string;
 }
 
 export const Input = forwardRef<TextInput, InputProps>(
-  ({ label, error, containerStyle, leftIcon, rightIcon, style, ...props }, ref) => {
+  ({ label, error, leftIcon, rightIcon, className, ...props }, ref) => {
     return (
-      <View style={[styles.container, containerStyle]}>
-        {label && <Text style={styles.label}>{label}</Text>}
-        <View style={[styles.inputContainer, error && styles.inputError]}>
-          {leftIcon && <View style={styles.iconLeft}>{leftIcon}</View>}
+      <View className={className}>
+        {label && (
+          <Text className="text-sm font-medium text-neutral-700 mb-1">
+            {label}
+          </Text>
+        )}
+        <View className={`
+          flex-row items-center
+          border rounded-lg bg-white
+          ${error ? 'border-danger-500' : 'border-neutral-200'}
+        `}>
+          {leftIcon && <View className="pl-3">{leftIcon}</View>}
           <TextInput
             ref={ref}
-            style={[
-              styles.input,
-              leftIcon && styles.inputWithLeftIcon,
-              rightIcon && styles.inputWithRightIcon,
-              style,
-            ]}
-            placeholderTextColor={styles.colors.placeholder}
+            className={`
+              flex-1 py-3 px-4 text-base text-neutral-900
+              ${leftIcon ? 'pl-2' : ''}
+              ${rightIcon ? 'pr-2' : ''}
+            `}
+            placeholderTextColor="#94a3b8"
             {...props}
           />
-          {rightIcon && <View style={styles.iconRight}>{rightIcon}</View>}
+          {rightIcon && <View className="pr-3">{rightIcon}</View>}
         </View>
-        {error && <Text style={styles.errorText}>{error}</Text>}
+        {error && (
+          <Text className="text-xs text-danger-500 mt-1">
+            {error}
+          </Text>
+        )}
       </View>
     );
   }
 );
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
-    marginBottom: 4,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    borderRadius: 8,
-    backgroundColor: '#FFFFFF',
-  },
-  input: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    fontSize: 16,
-    color: '#1F2937',
-  },
-  inputWithLeftIcon: {
-    paddingLeft: 8,
-  },
-  inputWithRightIcon: {
-    paddingRight: 8,
-  },
-  iconLeft: {
-    paddingLeft: 12,
-  },
-  iconRight: {
-    paddingRight: 12,
-  },
-  inputError: {
-    borderColor: '#DC2626',
-  },
-  errorText: {
-    color: '#DC2626',
-    fontSize: 12,
-    marginTop: 4,
-  },
-  colors: {
-    placeholder: '#9CA3AF',
-  },
-});

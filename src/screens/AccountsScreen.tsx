@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Modal } from 'react-native';
+import { 
+  View, 
+  Text, 
+  ScrollView, 
+  TouchableOpacity, 
+  RefreshControl, 
+  Modal,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  Dimensions,
+} from 'react-native';
 import { useApp } from '../context/AppContext';
 import { AccountForm } from '../components/forms/AccountForm';
 import { AccountCard } from '../components/list/AccountCard';
@@ -66,7 +77,7 @@ const AccountsScreen = () => {
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
-        <Text className="text-lg text-text">Loading...</Text>
+        <Text className="text-lg text-neutral-700">Loading...</Text>
       </View>
     );
   }
@@ -81,15 +92,15 @@ const AccountsScreen = () => {
       >
         {/* Header Section */}
         <View className="px-4 pt-6 pb-4">
-          <Text className="text-2xl font-bold text-text mb-1">Accounts</Text>
-          <Text className="text-sm text-gray-500">
+          <Text className="text-2xl font-bold text-neutral-900 mb-1">Accounts</Text>
+          <Text className="text-sm text-neutral-500">
             {totalAccounts} {totalAccounts === 1 ? 'account' : 'accounts'} total
           </Text>
         </View>
 
         {/* Total Balance Card */}
         <View className="mx-4 mb-6">
-          <View className="bg-primary rounded-2xl p-6 shadow-lg">
+          <View className="bg-primary-600 rounded-2xl p-6 shadow-lg">
             <Text className="text-white/80 text-sm mb-2">Total Balance</Text>
             <Text className="text-white text-4xl font-bold">
               ${totalBalance.toFixed(2)}
@@ -106,24 +117,24 @@ const AccountsScreen = () => {
 
         {/* Add Account Button */}
         <TouchableOpacity 
-          className="mx-4 mb-6 bg-primary/10 border-2 border-primary border-dashed p-4 rounded-xl flex-row items-center justify-center"
+          className="mx-4 mb-6 bg-primary-50 border-2 border-primary-600 border-dashed p-4 rounded-xl flex-row items-center justify-center"
           onPress={() => setShowForm(true)}
         >
           <Ionicons name="add-circle-outline" size={24} color="#2563EB" />
-          <Text className="text-primary font-semibold ml-2">Add New Account</Text>
+          <Text className="text-primary-600 font-semibold ml-2">Add New Account</Text>
         </TouchableOpacity>
 
         {/* Accounts List */}
         <View className="px-4 pb-6">
-          <Text className="text-xl font-bold text-text mb-4">Your Accounts</Text>
+          <Text className="text-xl font-bold text-neutral-900 mb-4">Your Accounts</Text>
           {accounts.length === 0 ? (
-            <View className="bg-surface rounded-xl p-6 shadow-sm border border-gray-100">
+            <View className="bg-white rounded-xl p-6 shadow-sm border border-neutral-100">
               <View className="items-center">
                 <Ionicons name="wallet-outline" size={48} color="#94A3B8" />
-                <Text className="text-gray-500 text-center mt-4 text-base">
+                <Text className="text-neutral-500 text-center mt-4 text-base">
                   No accounts added yet
                 </Text>
-                <Text className="text-gray-400 text-center mt-2 text-sm">
+                <Text className="text-neutral-400 text-center mt-2 text-sm">
                   Add your first account to start tracking your finances
                 </Text>
               </View>
@@ -149,26 +160,49 @@ const AccountsScreen = () => {
         transparent={true}
         onRequestClose={() => setShowForm(false)}
       >
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-surface rounded-t-3xl">
-            <View className="px-6 py-4 border-b border-gray-100 flex-row justify-between items-center">
-              <Text className="text-xl font-bold text-text">Add New Account</Text>
-              <TouchableOpacity
-                className="p-2 -m-2"
-                onPress={() => setShowForm(false)}
+        <TouchableOpacity 
+          className="flex-1 bg-black/50"
+          activeOpacity={1} 
+          onPress={() => {
+            Keyboard.dismiss();
+            setShowForm(false);
+          }}
+        >
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+            className="flex-1 justify-end"
+          >
+            <TouchableOpacity 
+              activeOpacity={1} 
+              onPress={() => Keyboard.dismiss()}
+            >
+              <ScrollView 
+                className="bg-white rounded-t-3xl"
+                bounces={false}
+                keyboardShouldPersistTaps="handled"
               >
-                <Ionicons name="close" size={24} color="#64748B" />
-              </TouchableOpacity>
-            </View>
-            
-            <View className="p-6">
-              <AccountForm
-                onSubmit={handleAddAccount}
-                isLoading={isLoading}
-              />
-            </View>
-          </View>
-        </View>
+                <View className="px-6 py-4 border-b border-neutral-100 flex-row justify-between items-center">
+                  <Text className="text-xl font-bold text-neutral-900">Add New Account</Text>
+                  <TouchableOpacity
+                    className="p-2 -m-2"
+                    onPress={() => setShowForm(false)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Ionicons name="close" size={24} color="#64748B" />
+                  </TouchableOpacity>
+                </View>
+                
+                <View className="p-6">
+                  <AccountForm
+                    onSubmit={handleAddAccount}
+                    isLoading={isLoading}
+                  />
+                </View>
+              </ScrollView>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        </TouchableOpacity>
       </Modal>
     </View>
   );

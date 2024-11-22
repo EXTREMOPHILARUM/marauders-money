@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { CurrencyInput } from '../form/CurrencyInput';
@@ -8,12 +8,13 @@ interface AccountFormData {
   name: string;
   type: 'checking' | 'savings' | 'credit' | 'investment';
   balance: string;
+  currency: string;
   institution?: string;
   notes?: string;
 }
 
 interface AccountFormProps {
-  onSubmit: (data: AccountFormData) => void;
+  onSubmit: (data: Omit<AccountFormData & { balance: number }, 'id' | 'lastUpdated'>) => void;
   initialData?: Partial<AccountFormData>;
   isLoading?: boolean;
 }
@@ -27,6 +28,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
     name: initialData?.name || '',
     type: initialData?.type || 'checking',
     balance: initialData?.balance || '',
+    currency: initialData?.currency || 'USD',
     institution: initialData?.institution || '',
     notes: initialData?.notes || '',
   });
@@ -59,28 +61,32 @@ export const AccountForm: React.FC<AccountFormProps> = ({
 
   const handleSubmit = () => {
     if (validate()) {
-      onSubmit(formData);
+      onSubmit({
+        ...formData,
+        balance: parseFloat(formData.balance.replace(/[^0-9.-]+/g, '')),
+      });
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View className="p-md bg-white">
       <Input
         label="Account Name"
         value={formData.name}
         onChangeText={(text) => setFormData({ ...formData, name: text })}
         error={errors.name}
         placeholder="Enter account name"
+        className="mb-md"
       />
 
-      <View style={styles.typeContainer}>
+      <View className="flex-row flex-wrap gap-sm mb-md">
         {accountTypes.map((type) => (
           <Button
             key={type}
             title={type.charAt(0).toUpperCase() + type.slice(1)}
             variant={formData.type === type ? 'primary' : 'outline'}
             onPress={() => setFormData({ ...formData, type })}
-            style={styles.typeButton}
+            className="px-2 py-1"
             size="small"
           />
         ))}
@@ -91,6 +97,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
         value={formData.balance}
         onChangeValue={(value) => setFormData({ ...formData, balance: value })}
         error={errors.balance}
+        className="mb-md"
       />
 
       <Input
@@ -98,6 +105,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
         value={formData.institution}
         onChangeText={(text) => setFormData({ ...formData, institution: text })}
         placeholder="Enter bank or institution name"
+        className="mb-md"
       />
 
       <Input
@@ -107,35 +115,17 @@ export const AccountForm: React.FC<AccountFormProps> = ({
         placeholder="Add any additional notes"
         multiline
         numberOfLines={3}
-        style={styles.notesInput}
+        className="mb-lg h-[80px]"
+        textAlignVertical="top"
       />
 
       <Button
         title="Save Account"
         onPress={handleSubmit}
         loading={isLoading}
-        fullWidth
+        variant="primary"
+        className="w-full bg-primary-600 active:bg-primary-700"
       />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-  },
-  typeContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginVertical: 16,
-    gap: 8,
-  },
-  typeButton: {
-    flex: 1,
-    minWidth: '45%',
-  },
-  notesInput: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-});

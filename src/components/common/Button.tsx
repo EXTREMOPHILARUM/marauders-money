@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 interface ButtonProps {
   onPress: () => void;
@@ -8,7 +8,7 @@ interface ButtonProps {
   size?: 'small' | 'medium' | 'large';
   disabled?: boolean;
   loading?: boolean;
-  fullWidth?: boolean;
+  className?: string;
   icon?: React.ReactNode;
 }
 
@@ -19,84 +19,62 @@ export const Button: React.FC<ButtonProps> = ({
   size = 'medium',
   disabled = false,
   loading = false,
-  fullWidth = false,
+  className = '',
   icon,
 }) => {
-  const getBackgroundColor = () => {
-    if (disabled) return styles.colors.disabled;
+  const getVariantClasses = () => {
+    if (disabled) return 'bg-neutral-200 text-neutral-400';
+    
     switch (variant) {
       case 'primary':
-        return styles.colors.primary;
+        return 'bg-primary-600 text-white active:bg-primary-700';
       case 'secondary':
-        return styles.colors.secondary;
+        return 'bg-secondary-600 text-white active:bg-secondary-700';
       case 'outline':
-        return 'transparent';
+        return 'bg-transparent border-2 border-primary-600 text-primary-600';
       case 'danger':
-        return styles.colors.danger;
+        return 'bg-danger-600 text-white active:bg-danger-700';
       default:
-        return styles.colors.primary;
+        return 'bg-primary-600 text-white active:bg-primary-700';
     }
   };
 
-  const getTextColor = () => {
-    if (disabled) return styles.colors.disabledText;
-    switch (variant) {
-      case 'outline':
-        return styles.colors.primary;
-      default:
-        return '#FFFFFF';
-    }
-  };
-
-  const getPadding = () => {
+  const getSizeClasses = () => {
     switch (size) {
       case 'small':
-        return { paddingVertical: 8, paddingHorizontal: 16 };
+        return 'py-2 px-4 text-sm';
       case 'large':
-        return { paddingVertical: 16, paddingHorizontal: 32 };
+        return 'py-4 px-8 text-lg';
       default:
-        return { paddingVertical: 12, paddingHorizontal: 24 };
+        return 'py-3 px-6 text-base';
     }
-  };
-
-  const getBorderStyle = () => {
-    return variant === 'outline'
-      ? { borderWidth: 2, borderColor: styles.colors.primary }
-      : {};
   };
 
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
-      style={({ pressed }) => [
-        styles.button,
-        {
-          backgroundColor: getBackgroundColor(),
-          opacity: pressed ? 0.8 : 1,
-          width: fullWidth ? '100%' : 'auto',
-          ...getPadding(),
-          ...getBorderStyle(),
-        },
-      ]}
+      className={`
+        rounded-lg items-center justify-center
+        ${getVariantClasses()}
+        ${getSizeClasses()}
+        ${className}
+      `}
     >
-      <View style={styles.contentContainer}>
+      <View className="flex-row items-center justify-center">
         {loading ? (
           <ActivityIndicator
             size="small"
-            color={variant === 'outline' ? styles.colors.primary : '#FFFFFF'}
+            color={variant === 'outline' ? '#2563eb' : '#ffffff'}
           />
         ) : (
           <>
-            {icon && <View style={styles.iconContainer}>{icon}</View>}
+            {icon && <View className="mr-2">{icon}</View>}
             <Text
-              style={[
-                styles.text,
-                {
-                  color: getTextColor(),
-                  fontSize: size === 'small' ? 14 : size === 'large' ? 18 : 16,
-                },
-              ]}
+              className={`
+                font-semibold text-center
+                ${disabled ? 'text-neutral-400' : variant === 'outline' ? 'text-primary-600' : 'text-white'}
+              `}
             >
               {title}
             </Text>
@@ -106,30 +84,3 @@ export const Button: React.FC<ButtonProps> = ({
     </Pressable>
   );
 };
-
-const styles = StyleSheet.create({
-  button: {
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  contentContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  text: {
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  iconContainer: {
-    marginRight: 8,
-  },
-  colors: {
-    primary: '#2563EB',
-    secondary: '#4B5563',
-    danger: '#DC2626',
-    disabled: '#E5E7EB',
-    disabledText: '#9CA3AF',
-  },
-});
