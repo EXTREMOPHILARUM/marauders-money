@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Modal } from 
 import { useApp } from '../context/AppContext';
 import { AccountForm } from '../components/forms/AccountForm';
 import { AccountCard } from '../components/list/AccountCard';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 interface Account {
   id: string;
@@ -60,6 +61,7 @@ const AccountsScreen = () => {
   }, [database]);
 
   const totalBalance = accounts.reduce((sum, account) => sum + account.balance, 0);
+  const totalAccounts = accounts.length;
 
   if (isLoading) {
     return (
@@ -77,37 +79,65 @@ const AccountsScreen = () => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Total Balance Card */}
-        <View className="m-4 bg-primary rounded-lg p-6">
-          <Text className="text-white text-sm mb-1">Total Balance</Text>
-          <Text className="text-white text-3xl font-bold">
-            ${totalBalance.toFixed(2)}
+        {/* Header Section */}
+        <View className="px-4 pt-6 pb-4">
+          <Text className="text-2xl font-bold text-text mb-1">Accounts</Text>
+          <Text className="text-sm text-gray-500">
+            {totalAccounts} {totalAccounts === 1 ? 'account' : 'accounts'} total
           </Text>
+        </View>
+
+        {/* Total Balance Card */}
+        <View className="mx-4 mb-6">
+          <View className="bg-primary rounded-2xl p-6 shadow-lg">
+            <Text className="text-white/80 text-sm mb-2">Total Balance</Text>
+            <Text className="text-white text-4xl font-bold">
+              ${totalBalance.toFixed(2)}
+            </Text>
+            <View className="mt-4 flex-row items-center">
+              <View className="flex-row items-center bg-white/20 rounded-full px-3 py-1">
+                <Text className="text-white/90 text-sm">
+                  Last updated {new Date().toLocaleDateString()}
+                </Text>
+              </View>
+            </View>
+          </View>
         </View>
 
         {/* Add Account Button */}
         <TouchableOpacity 
-          className="mx-4 mb-4 bg-surface border border-primary p-4 rounded-lg"
+          className="mx-4 mb-6 bg-primary/10 border-2 border-primary border-dashed p-4 rounded-xl flex-row items-center justify-center"
           onPress={() => setShowForm(true)}
         >
-          <Text className="text-primary text-center font-bold">Add New Account</Text>
+          <Ionicons name="add-circle-outline" size={24} color="#2563EB" />
+          <Text className="text-primary font-semibold ml-2">Add New Account</Text>
         </TouchableOpacity>
 
         {/* Accounts List */}
-        <View className="px-4">
+        <View className="px-4 pb-6">
           <Text className="text-xl font-bold text-text mb-4">Your Accounts</Text>
           {accounts.length === 0 ? (
-            <View className="bg-surface rounded-lg p-4 shadow-sm">
-              <Text className="text-text text-center">No accounts added yet</Text>
+            <View className="bg-surface rounded-xl p-6 shadow-sm border border-gray-100">
+              <View className="items-center">
+                <Ionicons name="wallet-outline" size={48} color="#94A3B8" />
+                <Text className="text-gray-500 text-center mt-4 text-base">
+                  No accounts added yet
+                </Text>
+                <Text className="text-gray-400 text-center mt-2 text-sm">
+                  Add your first account to start tracking your finances
+                </Text>
+              </View>
             </View>
           ) : (
-            accounts.map((account) => (
-              <AccountCard
-                key={account.id}
-                account={account}
-                onPress={() => {/* Handle account press */}}
-              />
-            ))
+            <View className="space-y-3">
+              {accounts.map((account) => (
+                <AccountCard
+                  key={account.id}
+                  account={account}
+                  onPress={() => {/* Handle account press */}}
+                />
+              ))}
+            </View>
           )}
         </View>
       </ScrollView>
@@ -119,19 +149,19 @@ const AccountsScreen = () => {
         transparent={true}
         onRequestClose={() => setShowForm(false)}
       >
-        <View className="flex-1 bg-black bg-opacity-50 justify-end">
+        <View className="flex-1 bg-black/50 justify-end">
           <View className="bg-surface rounded-t-3xl">
-            <View className="p-4 border-b border-gray-200">
-              <Text className="text-xl font-bold text-text text-center">Add New Account</Text>
+            <View className="px-6 py-4 border-b border-gray-100 flex-row justify-between items-center">
+              <Text className="text-xl font-bold text-text">Add New Account</Text>
               <TouchableOpacity
-                className="absolute right-4 top-4"
+                className="p-2 -m-2"
                 onPress={() => setShowForm(false)}
               >
-                <Text className="text-primary text-lg">Cancel</Text>
+                <Ionicons name="close" size={24} color="#64748B" />
               </TouchableOpacity>
             </View>
             
-            <View className="p-4">
+            <View className="p-6">
               <AccountForm
                 onSubmit={handleAddAccount}
                 isLoading={isLoading}

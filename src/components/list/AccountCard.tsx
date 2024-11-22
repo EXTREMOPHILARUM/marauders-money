@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { Card } from '../common/Card';
 
 interface AccountCardProps {
@@ -36,48 +36,14 @@ export const AccountCard: React.FC<AccountCardProps> = ({
 
   return (
     <Card onPress={onPress} elevation={2}>
-      <View style={styles.header}>
-        <Text style={styles.name}>{name}</Text>
-        <Text style={styles.type}>{type}</Text>
+      <View className="flex-row justify-between items-center mb-3">
+        <Text className="text-lg font-semibold text-gray-800">{name}</Text>
+        <Text className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">{type}</Text>
       </View>
-      <View style={styles.balanceContainer}>
-        <Text style={styles.balance}>{formatCurrency(balance)}</Text>
+      <View className="mb-3">
+        <Text className="text-2xl font-bold text-gray-800">{formatCurrency(balance)}</Text>
       </View>
-      <Text style={styles.lastUpdated}>Last updated: {formatDate(lastUpdated)}</Text>
+      <Text className="text-xs text-gray-400">Last updated: {formatDate(lastUpdated)}</Text>
     </Card>
   );
 };
-
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  name: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-  },
-  type: {
-    fontSize: 14,
-    color: '#6B7280',
-    backgroundColor: '#F3F4F6',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-  },
-  balanceContainer: {
-    marginBottom: 12,
-  },
-  balance: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1F2937',
-  },
-  lastUpdated: {
-    fontSize: 12,
-    color: '#9CA3AF',
-  },
-});

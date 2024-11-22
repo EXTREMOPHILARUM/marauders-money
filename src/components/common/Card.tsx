@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, ViewProps, Pressable } from 'react-native';
+import { View, ViewProps, Pressable } from 'react-native';
 
 interface CardProps extends ViewProps {
   onPress?: () => void;
@@ -16,26 +16,7 @@ export const Card: React.FC<CardProps> = ({
 }) => {
   const CardContainer = onPress ? Pressable : View;
 
-  return (
-    <CardContainer
-      style={({ pressed }: { pressed?: boolean }) => [
-        styles.card,
-        {
-          ...getShadow(elevation),
-          opacity: pressed ? 0.95 : 1,
-        },
-        style,
-      ]}
-      onPress={onPress}
-      {...props}
-    >
-      {children}
-    </CardContainer>
-  );
-};
-
-const getShadow = (elevation: number) => {
-  return {
+  const shadowStyle = {
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -45,13 +26,15 @@ const getShadow = (elevation: number) => {
     shadowRadius: elevation * 0.8,
     elevation: elevation,
   };
-};
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 8,
-  },
-});
+  return (
+    <CardContainer
+      className="bg-white rounded-lg p-4 m-2"
+      style={[shadowStyle, style]}
+      onPress={onPress}
+      {...props}
+    >
+      {children}
+    </CardContainer>
+  );
+};
