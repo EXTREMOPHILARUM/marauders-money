@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { CurrencyInput } from '../form/CurrencyInput';
@@ -9,32 +9,43 @@ interface BudgetFormData {
   name: string;
   amount: string;
   category: string;
+  period: 'daily' | 'weekly' | 'monthly' | 'yearly';
   startDate: Date;
   endDate: Date;
   notes?: string;
 }
 
 interface BudgetFormProps {
-  onSubmit: (data: BudgetFormData) => void;
+  onSubmit: (data: Omit<BudgetFormData & { amount: number }, 'id'>) => void;
   initialData?: Partial<BudgetFormData>;
   isLoading?: boolean;
+  editBudget?: boolean;
 }
 
 export const BudgetForm: React.FC<BudgetFormProps> = ({
   onSubmit,
   initialData,
   isLoading = false,
+  editBudget = false,
 }) => {
   const [formData, setFormData] = useState<BudgetFormData>({
     name: initialData?.name || '',
-    amount: initialData?.amount || '',
+    amount: initialData?.amount?.toString() || '',
     category: initialData?.category || '',
-    startDate: initialData?.startDate || new Date(),
-    endDate: initialData?.endDate || new Date(new Date().setMonth(new Date().getMonth() + 1)),
+    period: initialData?.period || 'monthly',
+    startDate: initialData?.startDate ? new Date(initialData.startDate) : new Date(),
+    endDate: initialData?.endDate ? new Date(initialData.endDate) : new Date(new Date().setMonth(new Date().getMonth() + 1)),
     notes: initialData?.notes || '',
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof BudgetFormData, string>>>({});
+
+  const periodTypes: Array<BudgetFormData['period']> = [
+    'daily',
+    'weekly',
+    'monthly',
+    'yearly',
+  ];
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof BudgetFormData, string>> = {};
@@ -42,9 +53,16 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
     if (!formData.name.trim()) {
       newErrors.name = 'Budget name is required';
     }
-    if (!formData.amount) {
+    
+    const numericAmount = formData.amount ? parseFloat(formData.amount.replace(/[^0-9.-]+/g, '')) : 0;
+    if (!formData.amount || formData.amount.trim() === '') {
       newErrors.amount = 'Budget amount is required';
+    } else if (isNaN(numericAmount)) {
+      newErrors.amount = 'Please enter a valid amount';
+    } else if (numericAmount <= 0) {
+      newErrors.amount = 'Amount must be greater than 0';
     }
+    
     if (!formData.category.trim()) {
       newErrors.category = 'Category is required';
     }
@@ -58,18 +76,28 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
 
   const handleSubmit = () => {
     if (validate()) {
-      onSubmit(formData);
+      const numericAmount = parseFloat(formData.amount.replace(/[^0-9.-]+/g, ''));
+      onSubmit({
+        name: formData.name.trim(),
+        amount: numericAmount,
+        category: formData.category.trim(),
+        period: formData.period,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        notes: formData.notes?.trim(),
+      });
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View className="p-4">
       <Input
         label="Budget Name"
         value={formData.name}
         onChangeText={(text) => setFormData({ ...formData, name: text })}
         error={errors.name}
         placeholder="Enter budget name"
+        className="mb-4"
       />
 
       <CurrencyInput
@@ -77,6 +105,7 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         value={formData.amount}
         onChangeValue={(value) => setFormData({ ...formData, amount: value })}
         error={errors.amount}
+        className="mb-4"
       />
 
       <Input
@@ -84,18 +113,35 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         value={formData.category}
         onChangeText={(text) => setFormData({ ...formData, category: text })}
         error={errors.category}
-        placeholder="Enter category"
+        placeholder="Enter category (e.g., Groceries, Utilities)"
+        className="mb-4"
       />
 
-      <View style={styles.dateContainer}>
-        <View style={styles.dateField}>
+      <View className="mb-4">
+        <View className="flex-row flex-wrap gap-2">
+          {periodTypes.map((period) => (
+            <Button
+              key={period}
+              title={period.charAt(0).toUpperCase() + period.slice(1)}
+              variant={formData.period === period ? 'primary' : 'outline'}
+              onPress={() => setFormData({ ...formData, period })}
+              className="px-3 py-1"
+              size="small"
+            />
+          ))}
+        </View>
+      </View>
+
+      <View className="flex-row gap-4 mb-4">
+        <View className="flex-1">
           <DateInput
             label="Start Date"
             value={formData.startDate}
             onChange={(date) => setFormData({ ...formData, startDate: date })}
+            error={undefined}
           />
         </View>
-        <View style={styles.dateField}>
+        <View className="flex-1">
           <DateInput
             label="End Date"
             value={formData.endDate}
@@ -112,33 +158,18 @@ export const BudgetForm: React.FC<BudgetFormProps> = ({
         placeholder="Add any additional notes"
         multiline
         numberOfLines={3}
-        style={styles.notesInput}
+        className="mb-6 h-[80px]"
+        textAlignVertical="top"
       />
 
       <Button
-        title="Save Budget"
+        title={editBudget ? "Update Budget" : "Save Budget"}
         onPress={handleSubmit}
         loading={isLoading}
-        fullWidth
+        variant="primary"
+        className="w-full bg-primary-600 active:bg-primary-700 disabled:opacity-50"
+        disabled={isLoading}
       />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-  },
-  dateContainer: {
-    flexDirection: 'row',
-    gap: 16,
-    marginVertical: 8,
-  },
-  dateField: {
-    flex: 1,
-  },
-  notesInput: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-});

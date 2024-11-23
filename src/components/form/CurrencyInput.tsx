@@ -12,17 +12,18 @@ interface CurrencyInputProps {
 }
 
 export const CurrencyInput = forwardRef<TextInput, CurrencyInputProps>(
-  ({ value, onChangeValue, currency = 'USD', ...props }, ref) => {
+  ({ value, onChangeValue, currency = 'INR', ...props }, ref) => {
     const formatCurrency = useCallback(
       (text: string) => {
         // Remove all non-digit characters
-        const numbers = text.replace(/[^\d]/g, '');
+        const numbers = text.replace(/[^\d.]/g, '');
         
-        // Convert to decimal
-        const decimal = (parseInt(numbers) || 0) / 100;
+        // Convert to number, handling both whole numbers and decimals
+        let decimal = parseFloat(numbers);
+        if (isNaN(decimal)) decimal = 0;
         
-        // Format as currency
-        return new Intl.NumberFormat('en-US', {
+        // Format as currency using Indian locale and INR currency
+        return new Intl.NumberFormat('en-IN', {
           style: 'currency',
           currency,
           minimumFractionDigits: 2,
@@ -33,8 +34,17 @@ export const CurrencyInput = forwardRef<TextInput, CurrencyInputProps>(
     );
 
     const handleChangeText = (text: string) => {
-      // Only update if we have a valid number
-      if (/^[\d.,\s]*$/.test(text.replace(/[$€£¥]/g, ''))) {
+      // Allow digits, single decimal point, and currency symbols
+      if (/^[\d.,\s]*$/.test(text.replace(/[₹$€£¥]/g, ''))) {
+        // Remove currency symbols and extra spaces
+        const cleanText = text.replace(/[₹$€£¥\s]/g, '');
+        
+        // Ensure only one decimal point
+        const parts = cleanText.split('.');
+        if (parts.length > 2) {
+          return;
+        }
+        
         onChangeValue(text);
       }
     };

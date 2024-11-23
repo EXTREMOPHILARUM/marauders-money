@@ -17,18 +17,20 @@ interface AccountFormProps {
   onSubmit: (data: Omit<AccountFormData & { balance: number }, 'id' | 'lastUpdated'>) => void;
   initialData?: Partial<AccountFormData>;
   isLoading?: boolean;
+  isEditMode?: boolean;
 }
 
 export const AccountForm: React.FC<AccountFormProps> = ({
   onSubmit,
   initialData,
   isLoading = false,
+  isEditMode = false,
 }) => {
   const [formData, setFormData] = useState<AccountFormData>({
     name: initialData?.name || '',
     type: initialData?.type || 'checking',
-    balance: initialData?.balance || '',
-    currency: initialData?.currency || 'USD',
+    balance: isEditMode ? '0' : (initialData?.balance?.toString() || ''),
+    currency: initialData?.currency || 'INR',
     institution: initialData?.institution || '',
     notes: initialData?.notes || '',
   });
@@ -48,7 +50,7 @@ export const AccountForm: React.FC<AccountFormProps> = ({
     if (!formData.name.trim()) {
       newErrors.name = 'Account name is required';
     }
-    if (!formData.balance) {
+    if (!isEditMode && !formData.balance) {
       newErrors.balance = 'Initial balance is required';
     }
     if (!formData.type) {
@@ -61,8 +63,12 @@ export const AccountForm: React.FC<AccountFormProps> = ({
 
   const handleSubmit = () => {
     if (validate()) {
-      const numericBalance = parseFloat(formData.balance.replace(/[^0-9.-]+/g, ''));
-      if (isNaN(numericBalance)) {
+      // In edit mode, we don't want to update the balance
+      const numericBalance = isEditMode 
+        ? (initialData?.balance as number || 0)
+        : parseFloat(formData.balance.replace(/[^0-9.-]+/g, ''));
+
+      if (!isEditMode && isNaN(numericBalance)) {
         setErrors(prev => ({ ...prev, balance: 'Invalid balance amount' }));
         return;
       }
@@ -79,43 +85,45 @@ export const AccountForm: React.FC<AccountFormProps> = ({
   };
 
   return (
-    <View className="p-md bg-white">
+    <View className="p-4">
       <Input
         label="Account Name"
         value={formData.name}
         onChangeText={(text) => setFormData({ ...formData, name: text })}
         error={errors.name}
         placeholder="Enter account name"
-        className="mb-md"
+        className="mb-4"
       />
 
-      <View className="flex-row flex-wrap gap-sm mb-md">
+      <View className="flex-row flex-wrap gap-2 mb-4">
         {accountTypes.map((type) => (
           <Button
             key={type}
             title={type.charAt(0).toUpperCase() + type.slice(1)}
             variant={formData.type === type ? 'primary' : 'outline'}
             onPress={() => setFormData({ ...formData, type })}
-            className="px-2 py-1"
+            className="px-3 py-1"
             size="small"
           />
         ))}
       </View>
 
-      <CurrencyInput
-        label="Initial Balance"
-        value={formData.balance}
-        onChangeValue={(value) => setFormData({ ...formData, balance: value })}
-        error={errors.balance}
-        className="mb-md"
-      />
+      {!isEditMode && (
+        <CurrencyInput
+          label="Initial Balance"
+          value={formData.balance}
+          onChangeValue={(value) => setFormData({ ...formData, balance: value })}
+          error={errors.balance}
+          className="mb-4"
+        />
+      )}
 
       <Input
         label="Financial Institution"
         value={formData.institution}
         onChangeText={(text) => setFormData({ ...formData, institution: text })}
         placeholder="Enter bank or institution name"
-        className="mb-md"
+        className="mb-4"
       />
 
       <Input
@@ -125,12 +133,12 @@ export const AccountForm: React.FC<AccountFormProps> = ({
         placeholder="Add any additional notes"
         multiline
         numberOfLines={3}
-        className="mb-lg h-[80px]"
+        className="mb-6 h-[80px]"
         textAlignVertical="top"
       />
 
       <Button
-        title="Save Account"
+        title={isEditMode ? "Update Account" : "Save Account"}
         onPress={handleSubmit}
         loading={isLoading}
         variant="primary"

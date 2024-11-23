@@ -2,11 +2,13 @@ import { createRxDatabase, RxDatabase, RxCollection, addRxPlugin } from 'rxdb';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { RxDBQueryBuilderPlugin } from 'rxdb/plugins/query-builder';
+import { RxDBUpdatePlugin } from 'rxdb/plugins/update';
 import { accountSchema, transactionSchema, budgetSchema, investmentSchema, goalSchema } from './schemas';
 
 // Add plugins
 addRxPlugin(RxDBDevModePlugin);
 addRxPlugin(RxDBQueryBuilderPlugin);
+addRxPlugin(RxDBUpdatePlugin);
 
 // Type definitions for collections
 interface AccountDocType {
