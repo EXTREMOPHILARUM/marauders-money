@@ -1,9 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Platform, Modal, Alert, KeyboardAvoidingView, Keyboard } from 'react-native';
+import { 
+  View, 
+  Text, 
+  ScrollView, 
+  TouchableOpacity, 
+  RefreshControl, 
+  Platform, 
+  Modal, 
+  Alert, 
+  KeyboardAvoidingView,
+  Keyboard,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import { useApp } from '../context/AppContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { BudgetForm } from '../components/forms/BudgetForm';
+import { BudgetCard } from '../components/list/BudgetCard';
 
 const generateUUID = () => {
   return 'budget_' + 'xxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -35,6 +48,7 @@ const BudgetScreen = () => {
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editBudget, setEditBudget] = useState<Budget | null>(null);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   const calculateBudgetProgress = async (budgets: Budget[]) => {
     if (!database) return budgets;
@@ -200,176 +214,153 @@ const BudgetScreen = () => {
   }
 
   return (
-    <View className="flex-1 bg-background">
-      <ScrollView
-        className="flex-1"
-        contentContainerStyle={{
-          paddingBottom: Platform.select({ ios: insets.bottom + 90, android: 90 })
-        }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {/* Header Section */}
-        <View className="px-4 pt-6 pb-4">
-          <Text className="text-2xl font-bold text-neutral-900 mb-1">Budget</Text>
-          <Text className="text-sm text-neutral-500">
-            {budgets.length} {budgets.length === 1 ? 'category' : 'categories'} total
-          </Text>
-        </View>
-
-        {/* Total Budget Overview Card */}
-        <View className="mx-4 mb-6">
-          <View className="bg-primary-600 rounded-2xl p-6 shadow-lg">
-            <Text className="text-white/80 text-sm mb-2">Total Budget</Text>
-            <Text className="text-white text-4xl font-bold">
-              {formatCurrency(totalBudget)}
+    <TouchableWithoutFeedback onPress={() => setActiveMenuId(null)}>
+      <View className="flex-1 bg-background">
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{
+            paddingBottom: Platform.select({ ios: insets.bottom + 90, android: 90 })
+          }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
+          {/* Header Section */}
+          <View className="px-4 pt-6 pb-4">
+            <Text className="text-2xl font-bold text-neutral-900 mb-1">Budget</Text>
+            <Text className="text-sm text-neutral-500">
+              {budgets.length} {budgets.length === 1 ? 'category' : 'categories'} total
             </Text>
-            <View className="mt-4">
-              <View className="flex-row justify-between items-center mb-2">
-                <Text className="text-white/90 text-sm">
-                  Spent: {formatCurrency(totalSpent)}
-                </Text>
-                <Text className="text-white/90 text-sm">
-                  {spentPercentage.toFixed(1)}%
-                </Text>
-              </View>
-              <View className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
-                <View 
-                  className="h-full bg-white" 
-                  style={{ width: `${Math.min(spentPercentage, 100)}%` }}
-                />
+          </View>
+
+          {/* Total Budget Overview Card */}
+          <View className="mx-4 mb-6">
+            <View className="bg-primary-600 rounded-2xl p-6 shadow-lg">
+              <Text className="text-white/80 text-sm mb-2">Total Budget</Text>
+              <Text className="text-white text-4xl font-bold">
+                {formatCurrency(totalBudget)}
+              </Text>
+              <View className="mt-4">
+                <View className="flex-row justify-between items-center mb-2">
+                  <Text className="text-white/90 text-sm">
+                    Spent: {formatCurrency(totalSpent)}
+                  </Text>
+                  <Text className="text-white/90 text-sm">
+                    {spentPercentage.toFixed(1)}%
+                  </Text>
+                </View>
+                <View className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+                  <View 
+                    className="h-full bg-white" 
+                    style={{ width: `${Math.min(spentPercentage, 100)}%` }}
+                  />
+                </View>
               </View>
             </View>
           </View>
-        </View>
 
-        {/* Add Budget Button */}
-        <TouchableOpacity 
-          className="mx-4 mb-6 bg-primary-50 border-2 border-primary-600 border-dashed p-4 rounded-xl flex-row items-center justify-center"
-          onPress={() => setIsFormVisible(true)}
-        >
-          <Ionicons name="add-circle-outline" size={24} color="#2563EB" />
-          <Text className="text-primary-600 font-semibold ml-2">Create New Budget</Text>
-        </TouchableOpacity>
+          {/* Add Budget Button */}
+          <TouchableOpacity 
+            className="mx-4 mb-6 bg-primary-50 border-2 border-primary-600 border-dashed p-4 rounded-xl flex-row items-center justify-center"
+            onPress={() => setIsFormVisible(true)}
+          >
+            <Ionicons name="add-circle-outline" size={24} color="#2563EB" />
+            <Text className="text-primary-600 font-semibold ml-2">Create New Budget</Text>
+          </TouchableOpacity>
 
-        {/* Budget Categories */}
-        <View className="px-4 pb-6">
-          <Text className="text-xl font-bold text-neutral-900 mb-4">Budget Categories</Text>
-          <View className="space-y-4">
-            {budgets.length === 0 ? (
-              <View className="bg-white rounded-xl p-6 shadow-sm border border-neutral-100">
-                <Text className="text-neutral-600 text-center">No budgets yet</Text>
-              </View>
-            ) : (
-              budgets.map((budget) => (
-                <View key={budget.id} className="bg-white rounded-xl p-4 shadow-sm border border-neutral-100">
-                  <View className="space-y-2">
-                    <View className="flex-row justify-between items-start">
-                      <View>
-                        <Text className="text-lg font-bold text-neutral-900">{budget.name}</Text>
-                        <Text className="text-sm text-neutral-500">{budget.category}</Text>
-                      </View>
-                      <View className="items-end">
-                        <Text className="text-lg font-bold text-neutral-900">
-                          {formatCurrency(budget.amount)}
-                        </Text>
-                        <Text className="text-sm text-neutral-500">
-                          {formatCurrency(budget.spent || 0)} spent
-                        </Text>
-                      </View>
-                    </View>
-                    <View className="space-y-1">
-                      <View className="flex-row justify-between">
-                        <Text className="text-sm text-neutral-600">
-                          Spent: {formatCurrency(budget.spent || 0)}
-                        </Text>
-                        <Text className="text-sm text-neutral-600">
-                          {((budget.progress || 0)).toFixed(1)}%
-                        </Text>
-                      </View>
-                      <View className="w-full h-2 bg-neutral-100 rounded-full overflow-hidden">
-                        <View 
-                          className="h-full bg-primary-600" 
-                          style={{ width: `${budget.progress || 0}%` }}
-                        />
-                      </View>
-                      <View className="flex-row justify-between">
-                        <TouchableOpacity onPress={() => handleEditBudget(budget)}>
-                          <Text className="text-sm text-primary-600">Edit</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => handleDeleteBudget(budget.id)}>
-                          <Text className="text-sm text-red-600">Delete</Text>
-                        </TouchableOpacity>
-                      </View>
-                    </View>
+          {/* Budget Categories */}
+          <View className="px-4 pb-6">
+            <Text className="text-xl font-bold text-neutral-900 mb-4">Budget Categories</Text>
+            <View className="space-y-4">
+              {budgets.length === 0 ? (
+                <View className="bg-white rounded-xl p-6 shadow-sm border border-neutral-100">
+                  <View className="items-center">
+                    <Ionicons name="pie-chart-outline" size={48} color="#94A3B8" />
+                    <Text className="text-neutral-500 text-center mt-4 text-base">
+                      No budgets added yet
+                    </Text>
+                    <Text className="text-neutral-400 text-center mt-2 text-sm">
+                      Add your first budget to start managing your expenses
+                    </Text>
                   </View>
                 </View>
-              ))
-            )}
-          </View>
-        </View>
-
-        {/* Budget Form Modal */}
-        <Modal
-          visible={isFormVisible}
-          animationType="slide"
-          transparent={true}
-          onRequestClose={() => {
-            Keyboard.dismiss();
-            setIsFormVisible(false);
-          }}
-        >
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1"
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
-          >
-            <TouchableOpacity
-              activeOpacity={1}
-              className="flex-1 bg-black/50 justify-end"
-              onPress={() => {
-                Keyboard.dismiss();
-                setIsFormVisible(false);
-              }}
-            >
-              <TouchableOpacity 
-                activeOpacity={1} 
-                onPress={(e) => e.stopPropagation()}
-                className="max-h-[90%]"
-              >
-                <ScrollView 
-                  className="bg-white rounded-t-3xl"
-                  bounces={false}
-                  keyboardShouldPersistTaps="handled"
-                  showsVerticalScrollIndicator={false}
-                >
-                  <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
-                    <Text className="text-lg font-bold">
-                      {editBudget ? 'Edit Budget' : 'Create New Budget'}
-                    </Text>
-                    <TouchableOpacity 
-                      onPress={() => {
-                        Keyboard.dismiss();
-                        setIsFormVisible(false);
-                      }}
-                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                    >
-                      <Ionicons name="close" size={24} color="#000" />
-                    </TouchableOpacity>
-                  </View>
-                  <BudgetForm
-                    onSubmit={handleCreateBudget}
-                    isLoading={isSubmitting}
-                    initialData={editBudget}
+              ) : (
+                budgets.map((budget) => (
+                  <BudgetCard
+                    key={budget.id}
+                    budget={budget}
+                    isMenuActive={activeMenuId === budget.id}
+                    onToggleMenu={() => setActiveMenuId(activeMenuId === budget.id ? null : budget.id)}
+                    onEdit={handleEditBudget}
+                    onDelete={handleDeleteBudget}
+                    formatCurrency={formatCurrency}
                   />
-                </ScrollView>
+                ))
+              )}
+            </View>
+          </View>
+
+          {/* Budget Form Modal */}
+          <Modal
+            visible={isFormVisible}
+            animationType="slide"
+            transparent={true}
+            onRequestClose={() => {
+              Keyboard.dismiss();
+              setIsFormVisible(false);
+            }}
+          >
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              className="flex-1"
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+            >
+              <TouchableOpacity
+                activeOpacity={1}
+                className="flex-1 bg-black/50 justify-end"
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setIsFormVisible(false);
+                }}
+              >
+                <TouchableOpacity 
+                  activeOpacity={1} 
+                  onPress={(e) => e.stopPropagation()}
+                  className="max-h-[90%]"
+                >
+                  <ScrollView 
+                    className="bg-white rounded-t-3xl"
+                    bounces={false}
+                    keyboardShouldPersistTaps="handled"
+                    showsVerticalScrollIndicator={false}
+                  >
+                    <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
+                      <Text className="text-lg font-bold">
+                        {editBudget ? 'Edit Budget' : 'Create New Budget'}
+                      </Text>
+                      <TouchableOpacity 
+                        onPress={() => {
+                          Keyboard.dismiss();
+                          setIsFormVisible(false);
+                        }}
+                        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      >
+                        <Ionicons name="close" size={24} color="#000" />
+                      </TouchableOpacity>
+                    </View>
+                    <BudgetForm
+                      onSubmit={handleCreateBudget}
+                      isLoading={isSubmitting}
+                      initialData={editBudget}
+                    />
+                  </ScrollView>
+                </TouchableOpacity>
               </TouchableOpacity>
-            </TouchableOpacity>
-          </KeyboardAvoidingView>
-        </Modal>
-      </ScrollView>
-    </View>
+            </KeyboardAvoidingView>
+          </Modal>
+        </ScrollView>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
