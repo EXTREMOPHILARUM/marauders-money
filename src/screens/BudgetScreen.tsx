@@ -189,6 +189,7 @@ const BudgetScreen = () => {
 
   const totalBudget = budgets.reduce((sum, budget) => sum + (Number(budget.amount) || 0), 0);
   const totalSpent = budgets.reduce((sum, budget) => sum + (Number(budget.spent) || 0), 0);
+  const spentPercentage = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
   if (isLoading) {
     return (
@@ -230,13 +231,13 @@ const BudgetScreen = () => {
                   Spent: {formatCurrency(totalSpent)}
                 </Text>
                 <Text className="text-white/90 text-sm">
-                  {((totalSpent / totalBudget) * 100).toFixed(1)}%
+                  {spentPercentage.toFixed(1)}%
                 </Text>
               </View>
               <View className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
                 <View 
                   className="h-full bg-white" 
-                  style={{ width: `${Math.min((totalSpent / totalBudget) * 100, 100)}%` }}
+                  style={{ width: `${Math.min(spentPercentage, 100)}%` }}
                 />
               </View>
             </View>
