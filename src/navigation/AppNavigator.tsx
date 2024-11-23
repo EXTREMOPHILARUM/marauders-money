@@ -2,6 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 // Screens (to be implemented)
 import DashboardScreen from '../screens/DashboardScreen';
@@ -35,35 +36,50 @@ const TabNavigator = () => {
         name="Dashboard" 
         component={DashboardScreen}
         options={{
-          title: 'Dashboard'
+          title: 'Dashboard',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
+          )
         }}
       />
       <Tab.Screen 
         name="Accounts" 
         component={AccountsScreen}
         options={{
-          title: 'Accounts'
+          title: 'Accounts',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="wallet-outline" size={size} color={color} />
+          )
         }}
       />
       <Tab.Screen 
         name="Budget" 
         component={BudgetScreen}
         options={{
-          title: 'Budget'
+          title: 'Budget',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="pie-chart-outline" size={size} color={color} />
+          )
         }}
       />
       <Tab.Screen 
         name="Investments" 
         component={InvestmentsScreen}
         options={{
-          title: 'Investments'
+          title: 'Investments',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="trending-up-outline" size={size} color={color} />
+          )
         }}
       />
       <Tab.Screen 
         name="Goals" 
         component={GoalsScreen}
         options={{
-          title: 'Goals'
+          title: 'Goals',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="flag-outline" size={size} color={color} />
+          )
         }}
       />
     </Tab.Navigator>

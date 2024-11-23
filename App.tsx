@@ -7,20 +7,21 @@
 import "./global.css"
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { SafeAreaView, StatusBar } from 'react-native';
+import { StatusBar } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AppProvider } from './src/context/AppContext';
 import AppNavigator from './src/navigation/AppNavigator';
 
 const App = () => {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
+    <SafeAreaProvider>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <AppProvider>
         <NavigationContainer>
           <AppNavigator />
         </NavigationContainer>
       </AppProvider>
-    </SafeAreaView>
+    </SafeAreaProvider>
   );
 };
 

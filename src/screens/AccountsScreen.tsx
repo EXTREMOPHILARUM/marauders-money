@@ -15,6 +15,7 @@ import { useApp } from '../context/AppContext';
 import { AccountForm } from '../components/forms/AccountForm';
 import { AccountCard } from '../components/list/AccountCard';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Account {
   id: string;
@@ -41,6 +42,7 @@ const AccountsScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const fetchAccounts = async () => {
     if (!database) return;
@@ -113,6 +115,9 @@ const AccountsScreen = () => {
     <View className="flex-1 bg-background">
       <ScrollView 
         className="flex-1"
+        contentContainerStyle={{
+          paddingBottom: Platform.select({ ios: insets.bottom + 90, android: 90 })
+        }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
