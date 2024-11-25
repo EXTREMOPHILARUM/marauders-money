@@ -4,6 +4,8 @@ import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { CurrencyInput } from '../form/CurrencyInput';
 import { DateInput } from '../form/DateInput';
+import { Select } from '../form/Select';
+import { Account } from '../../types/account';
 
 interface TransactionFormData {
   amount: string;
@@ -11,18 +13,21 @@ interface TransactionFormData {
   category: string;
   date: Date;
   type: 'income' | 'expense';
+  accountId: string;
 }
 
 interface TransactionFormProps {
   onSubmit: (data: TransactionFormData) => void;
   initialData?: Partial<TransactionFormData>;
   isLoading?: boolean;
+  accounts: Account[];
 }
 
 export const TransactionForm: React.FC<TransactionFormProps> = ({
   onSubmit,
   initialData,
   isLoading = false,
+  accounts,
 }) => {
   const [formData, setFormData] = useState<TransactionFormData>({
     amount: initialData?.amount || '',
@@ -30,6 +35,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     category: initialData?.category || '',
     date: initialData?.date || new Date(),
     type: initialData?.type || 'expense',
+    accountId: initialData?.accountId || '',
   });
 
   const [errors, setErrors] = useState<Partial<Record<keyof TransactionFormData, string>>>({});
@@ -46,6 +52,9 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
     if (!formData.category) {
       newErrors.category = 'Category is required';
     }
+    if (!formData.accountId) {
+      newErrors.accountId = 'Account is required';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -53,12 +62,29 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
 
   const handleSubmit = () => {
     if (validate()) {
-      onSubmit(formData);
+      // Clean the amount value before submitting
+      const cleanAmount = formData.amount.replace(/[^0-9.]/g, '');
+      onSubmit({
+        ...formData,
+        amount: cleanAmount
+      });
     }
   };
 
   return (
     <View style={styles.container}>
+      <Select
+        label="Account"
+        value={formData.accountId}
+        onValueChange={(value) => setFormData({ ...formData, accountId: value })}
+        items={accounts.map(account => ({
+          label: account.name,
+          value: account.id
+        }))}
+        error={errors.accountId}
+        placeholder="Select an account"
+      />
+
       <CurrencyInput
         label="Amount"
         value={formData.amount}

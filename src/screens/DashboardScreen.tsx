@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Platform } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Platform, Alert } from 'react-native';
 import { useApp } from '../context/AppContext';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
@@ -14,7 +14,10 @@ import { GoalCard } from '../components/list/GoalCard';
 import { MonthlyComparison } from '../components/charts/MonthlyComparison';
 import { CategoryBreakdown } from '../components/charts/CategoryBreakdown';
 import { formatCurrency } from '../utils/currency';
+import { generateUUID } from '../utils/uuid';
 import { Account } from '../types/account';
+import { TransactionForm } from '../components/forms/TransactionForm';
+import { FormModal } from '../components/common/FormModal';
 
 interface Summary {
   totalBalance: number;
@@ -47,6 +50,7 @@ type RootStackParamList = {
   Budget: undefined;
   Investments: undefined;
   Goals: undefined;
+  AddTransaction: undefined;
 };
 
 const DashboardScreen = () => {
@@ -65,6 +69,9 @@ const DashboardScreen = () => {
     monthlyData: [],
     categoryData: [],
   });
+  const [isTransactionFormVisible, setIsTransactionFormVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const insets = useSafeAreaInsets();
 
   const fetchSummary = async () => {
@@ -160,14 +167,79 @@ const DashboardScreen = () => {
     });
   };
 
+  const fetchAccounts = async () => {
+    if (!database) return;
+    const allAccounts = await database.accounts.find().exec();
+    setAccounts(allAccounts);
+  };
+
   useEffect(() => {
     fetchSummary();
+    fetchAccounts();
   }, [database]);
 
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchSummary();
+    await fetchAccounts();
     setRefreshing(false);
+  };
+
+  const handleCreateTransaction = async (transactionData: any) => {
+    if (!database) return;
+    
+    try {
+      setIsSubmitting(true);
+      const id = generateUUID('tx');
+      const now = Date.now();
+      
+      // Get the account to use its currency
+      const account = await database.accounts.findOne(transactionData.accountId).exec();
+      if (!account) {
+        throw new Error('Account not found');
+      }
+
+      // Parse the amount as a float, ensuring it's a valid number
+      const amount = parseFloat(transactionData.amount);
+      if (isNaN(amount)) {
+        throw new Error('Invalid amount value');
+      }
+
+      const newTransaction = {
+        id,
+        accountId: transactionData.accountId,
+        amount,
+        description: transactionData.description.trim(),
+        category: transactionData.category.trim(),
+        date: transactionData.date.getTime(),
+        type: transactionData.type,
+        currency: account.currency,
+        createdAt: now,
+        updatedAt: now,
+      };
+      
+      // Update account balance
+      const balanceChange = transactionData.type === 'income' ? amount : -amount;
+      await account.patch({
+        balance: account.balance + balanceChange,
+        updatedAt: now,
+      });
+      
+      await database.transactions.insert(newTransaction);
+      await fetchSummary();
+      await fetchAccounts();
+      setIsTransactionFormVisible(false);
+    } catch (error) {
+      console.error('Error creating transaction:', error);
+      Alert.alert('Error', error.message || 'Failed to create transaction');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleOpenTransactionForm = async () => {
+    await fetchAccounts();
+    setIsTransactionFormVisible(true);
   };
 
   const DashboardHeader: React.FC<{ title: string; subtitle: string }> = ({ title, subtitle }) => (
@@ -258,6 +330,11 @@ const DashboardScreen = () => {
         icon: 'trending-up-outline',
         label: 'Add Investment',
         onPress: () => navigation.navigate('Investments')
+      },
+      {
+        icon: 'add-circle-outline',
+        label: 'Add Transaction',
+        onPress: handleOpenTransactionForm
       }
     ];
 
@@ -341,9 +418,11 @@ const DashboardScreen = () => {
         <Card className="mx-4 mb-6">
           <View className="flex-row justify-between items-center mb-4">
             <Text className="text-xl font-bold text-neutral-900">Recent Activity</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Transactions')}>
-              <Text className="text-primary-600">See All</Text>
-            </TouchableOpacity>
+            <View className="flex-row space-x-4">
+              <TouchableOpacity onPress={() => navigation.navigate('Transactions')}>
+                <Text className="text-primary-600">See All</Text>
+              </TouchableOpacity>
+            </View>
           </View>
           {summary.recentTransactions.length > 0 ? (
             summary.recentTransactions.map((transaction: any) => (
@@ -365,7 +444,22 @@ const DashboardScreen = () => {
     );
   };
 
-  return renderContent();
+  return (
+    <View className="flex-1">
+      {renderContent()}
+      <FormModal
+        visible={isTransactionFormVisible}
+        onClose={() => setIsTransactionFormVisible(false)}
+        title="Add Transaction"
+      >
+        <TransactionForm
+          onSubmit={handleCreateTransaction}
+          isLoading={isSubmitting}
+          accounts={accounts}
+        />
+      </FormModal>
+    </View>
+  );
 };
 
 export default DashboardScreen;
