@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, Dimensions } from 'react-native';
 import { BarChart } from 'react-native-chart-kit';
-import { formatCurrency } from '../../utils/currency';
+import { formatCurrency } from '../../utils/formatters';
 
 interface MonthlyData {
   month: string;

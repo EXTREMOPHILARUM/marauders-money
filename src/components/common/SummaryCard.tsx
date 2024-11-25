@@ -84,7 +84,7 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
     const numericValue = parseFloat(value.replace(/[^0-9.-]+/g, ''));
     
     // Show primary color if main value is 0
-    console.log("Numeric value:", numericValue);
+
     if (numericValue == 0) return 'primary';
     
     if (!change) return 'info';
