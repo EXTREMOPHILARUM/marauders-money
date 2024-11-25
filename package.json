@@ -24,8 +24,7 @@
     "android:release": "source .env && cd android && ./gradlew assembleRelease && cd ..",
     "android:bundle": "cd android && ./gradlew bundleRelease && cd ..",
     "android:create-keystore": "./scripts/create-keystore.sh",
-    "android:encode-keystore": "./scripts/encode-keystore.sh",
-    "postinstall": "patch-package"
+    "android:encode-keystore": "./scripts/encode-keystore.sh"
   },
   "dependencies": {
     "@react-native-community/datetimepicker": "^8.2.0",
