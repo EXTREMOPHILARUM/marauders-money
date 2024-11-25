@@ -2,17 +2,7 @@ import React from 'react';
 import { Text, View, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { MenuToggle } from '../common/MenuToggle';
-
-interface Account {
-  id: string;
-  name: string;
-  type: string;
-  balance: number;
-  currency: string;
-  institution?: string;
-  notes?: string;
-  lastUpdated: number;
-}
+import { Account } from '../../types/account';
 
 interface AccountCardProps {
   account: Account;

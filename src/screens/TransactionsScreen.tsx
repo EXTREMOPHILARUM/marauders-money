@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import { TransactionForm } from '../components/forms/TransactionForm';
 import { TransactionItem } from '../components/list/TransactionItem';
 import { SpendingChart } from '../components/charts/SpendingChart';
+import { Account } from '../types/account';
 
 interface Transaction {
   id: string;
@@ -13,12 +14,6 @@ interface Transaction {
   description: string;
   date: number;
   accountId: string;
-}
-
-interface Account {
-  id: string;
-  name: string;
-  balance: number;
 }
 
 const TransactionsScreen = () => {
@@ -45,11 +40,7 @@ const TransactionsScreen = () => {
 
     // Fetch accounts for the form
     const allAccounts = await database.accounts.find().exec();
-    setAccounts(allAccounts.map(acc => ({
-      id: acc.id,
-      name: acc.name,
-      balance: acc.balance,
-    })));
+    setAccounts(allAccounts.map(acc => acc));
   };
 
   const onRefresh = async () => {

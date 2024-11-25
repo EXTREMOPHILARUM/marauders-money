@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { InvestmentForm } from '../components/forms/InvestmentForm';
 import { InvestmentCard } from '../components/list/InvestmentCard';
 import { generateUUID } from '../utils/uuid';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency } from '../utils/currency';
 import { ScreenHeader } from '../components/common/ScreenHeader';
 import { AddItemButton } from '../components/common/AddItemButton';
 import { FormModal } from '../components/common/FormModal';

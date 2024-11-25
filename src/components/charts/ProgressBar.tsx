@@ -1,10 +1,11 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   withTiming,
   withSpring,
 } from 'react-native-reanimated';
+import { formatCurrency } from '../../utils/currency';
 
 interface ProgressBarProps {
   current: number;
@@ -34,13 +35,8 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
     };
   });
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
+  const formatAmount = (amount: number) => {
+    return formatCurrency(amount);
   };
 
   return (
@@ -50,7 +46,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
           <Text style={styles.label}>{label}</Text>
           {showAmount && (
             <Text style={styles.amount}>
-              {formatCurrency(current)} / {formatCurrency(target)}
+              {formatAmount(current)} / {formatAmount(target)}
             </Text>
           )}
         </View>

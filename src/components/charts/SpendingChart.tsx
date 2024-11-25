@@ -1,9 +1,12 @@
 import React from 'react';
 import { StyleSheet, Text, View, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
+import { formatCurrency } from '../../utils/currency';
+
+const screenWidth = Dimensions.get("window").width;
 
 interface SpendingDataPoint {
-  date: Date;
+  date: string;
   amount: number;
 }
 
@@ -20,39 +23,38 @@ export const SpendingChart: React.FC<SpendingChartProps> = ({
 }) => {
   const chartData = {
     labels: data.map(point =>
-      point.date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      point.date
     ),
     datasets: [
       {
         data: data.map(point => point.amount),
-        color: (opacity = 1) => `rgba(37, 99, 235, ${opacity})`,
+        color: (opacity = 1) => `rgba(59, 130, 246, ${opacity})`, // Blue
         strokeWidth: 2,
       },
     ],
   };
 
   const chartConfig = {
-    backgroundColor: '#FFFFFF',
-    backgroundGradientFrom: '#FFFFFF',
-    backgroundGradientTo: '#FFFFFF',
+    backgroundColor: '#ffffff',
+    backgroundGradientFrom: '#ffffff',
+    backgroundGradientTo: '#ffffff',
     decimalPlaces: 0,
     color: (opacity = 1) => `rgba(55, 65, 81, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
+    labelColor: (opacity = 1) => `rgba(55, 65, 81, ${opacity})`,
     style: {
       borderRadius: 16,
     },
     propsForDots: {
-      r: '6',
+      r: '4',
       strokeWidth: '2',
-      stroke: '#2563EB',
+      stroke: '#3B82F6',
     },
-    formatYLabel: (value: string) =>
-      new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        notation: 'compact',
-        minimumFractionDigits: 0,
-      }).format(Number(value)),
+    propsForLabels: {
+      fontSize: 12,
+    },
+    formatYLabel: (value: number) => {
+      return formatCurrency(value);
+    },
   };
 
   return (
@@ -60,7 +62,7 @@ export const SpendingChart: React.FC<SpendingChartProps> = ({
       {title && <Text style={styles.title}>{title}</Text>}
       <LineChart
         data={chartData}
-        width={Dimensions.get('window').width - 32}
+        width={screenWidth - 48} // Accounting for padding
         height={height}
         chartConfig={chartConfig}
         bezier
@@ -80,7 +82,7 @@ export const SpendingChart: React.FC<SpendingChartProps> = ({
 const styles = StyleSheet.create({
   container: {
     marginVertical: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#ffffff',
     borderRadius: 16,
     padding: 16,
     ...Platform.select({

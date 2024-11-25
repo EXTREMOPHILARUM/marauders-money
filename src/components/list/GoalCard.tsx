@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { formatCurrency } from '../../utils/formatters';
+import { formatCurrency } from '../../utils/currency';
 import { MenuToggle } from '../common/MenuToggle'; // Assuming MenuToggle is a separate component
 
 export interface Goal {

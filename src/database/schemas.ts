@@ -31,6 +31,14 @@ export const accountSchema = {
       maxLength: 3,
       pattern: '^[A-Z]{3}$'
     },
+    institution: {
+      type: 'string',
+      maxLength: 100
+    },
+    notes: {
+      type: 'string',
+      maxLength: 500
+    },
     createdAt: { 
       type: 'number',
       multipleOf: 1,

@@ -1,6 +1,9 @@
 import React from 'react';
 import { StyleSheet, Text, View, Dimensions } from 'react-native';
 import { PieChart } from 'react-native-chart-kit';
+import { formatCurrency } from '../../utils/currency';
+
+const screenWidth = Dimensions.get("window").width;
 
 interface CategoryData {
   name: string;
@@ -27,12 +30,8 @@ export const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
     legendFontSize: 12,
   }));
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(value);
+  const formatAmount = (amount: number) => {
+    return formatCurrency(amount);
   };
 
   const total = data.reduce((sum, item) => sum + item.amount, 0);
@@ -42,18 +41,24 @@ export const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
       {title && <Text style={styles.title}>{title}</Text>}
       <View style={styles.totalContainer}>
         <Text style={styles.totalLabel}>Total Spending</Text>
-        <Text style={styles.totalAmount}>{formatCurrency(total)}</Text>
+        <Text style={styles.totalAmount}>{formatAmount(total)}</Text>
       </View>
       <PieChart
         data={chartData}
-        width={Dimensions.get('window').width - 32}
+        width={screenWidth - 48} // Accounting for padding
         height={height}
         chartConfig={{
+          backgroundColor: '#ffffff',
+          backgroundGradientFrom: '#ffffff',
+          backgroundGradientTo: '#ffffff',
           color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+          style: {
+            borderRadius: 16,
+          },
         }}
         accessor="amount"
         backgroundColor="transparent"
-        paddingLeft="15"
+        paddingLeft="0"
         absolute
       />
       <View style={styles.legendContainer}>
@@ -63,7 +68,7 @@ export const CategoryBreakdown: React.FC<CategoryBreakdownProps> = ({
             <View style={styles.legendText}>
               <Text style={styles.legendName}>{item.name}</Text>
               <Text style={styles.legendAmount}>
-                {formatCurrency(item.amount)}
+                {formatAmount(item.amount)}
                 <Text style={styles.legendPercentage}>
                   {' '}
                   ({((item.amount / total) * 100).toFixed(1)}%)
@@ -81,7 +86,7 @@ const styles = StyleSheet.create({
   container: {
     marginVertical: 16,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 16,
     ...Platform.select({
       ios: {
@@ -112,7 +117,7 @@ const styles = StyleSheet.create({
   },
   totalAmount: {
     fontSize: 24,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#1F2937',
   },
   legendContainer: {

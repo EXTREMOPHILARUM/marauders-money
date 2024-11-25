@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Platform, Pressable } from 'react-native';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { Input } from '../common/Input';
+import { formatDate } from '../../utils/formatters';
 
 interface DateInputProps {
   value: Date;
@@ -16,17 +17,8 @@ export const DateInput: React.FC<DateInputProps> = ({
   onChange,
   label,
   error,
-  format = 'MM/dd/yyyy',
 }) => {
   const [show, setShow] = useState(false);
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      month: '2-digit',
-      day: '2-digit',
-      year: 'numeric',
-    });
-  };
 
   const handleChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
     setShow(Platform.OS === 'ios');

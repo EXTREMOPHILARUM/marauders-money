@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { CurrencyInput } from '../form/CurrencyInput';
+import { Account, AccountType } from '../../types/account';
 
 interface AccountFormData {
   name: string;

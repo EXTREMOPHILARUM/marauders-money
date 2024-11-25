@@ -1,6 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { Card } from '../common/Card';
+import { formatCurrency } from '../../utils/currency';
+import { formatDate } from '../../utils/formatters';
 
 interface TransactionItemProps {
   amount: number;
@@ -19,20 +21,6 @@ export const TransactionItem: React.FC<TransactionItemProps> = ({
   type,
   onPress,
 }) => {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(Math.abs(value));
-  };
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
   return (
     <Card onPress={onPress} elevation={1}>
       <View style={styles.container}>

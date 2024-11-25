@@ -9,24 +9,15 @@ import { useApp } from '../context/AppContext';
 import { AccountForm } from '../components/forms/AccountForm';
 import { AccountCard } from '../components/list/AccountCard';
 import { generateUUID } from '../utils/uuid';
-import { formatCurrency } from '../utils/formatters';
+import { formatDate } from '../utils/formatters';
+import { formatCurrency } from '../utils/currency';
 import { ScreenHeader } from '../components/common/ScreenHeader';
 import { AddItemButton } from '../components/common/AddItemButton';
 import { FormModal } from '../components/common/FormModal';
 import { SummaryCard } from '../components/common/SummaryCard';
 import { EmptyState } from '../components/common/EmptyState';
 import { ListContainer } from '../components/common/ListContainer';
-
-interface Account {
-  id: string;
-  name: string;
-  type: string;
-  balance: number;
-  currency: string;
-  institution?: string;
-  notes?: string;
-  lastUpdated: number;
-}
+import { Account } from '../types/account';
 
 const AccountsScreen = () => {
   const { database, isLoading } = useApp();
@@ -204,7 +195,8 @@ const AccountsScreen = () => {
                     onToggleMenu={() => setActiveMenuId(activeMenuId === account.id ? null : account.id)}
                     onEdit={handleEditAccount}
                     onDelete={handleDeleteAccount}
-                    formatCurrency={formatCurrency}
+                    formatCurrency={formatCurrency} 
+                    formatDate={formatDate}
                   />
                 ))}
               </View>

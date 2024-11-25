@@ -2,6 +2,9 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { MenuToggle } from '../common/MenuToggle';
+import { Card } from '../common/Card';
+import { formatCurrency } from '../../utils/currency';
+import { formatDate } from '../../utils/formatters';
 
 interface Investment {
   id: string;
@@ -20,7 +23,6 @@ interface InvestmentCardProps {
   onToggleMenu: () => void;
   onEdit: (investment: Investment) => void;
   onDelete: (id: string) => void;
-  formatCurrency: (amount: number) => string;
 }
 
 export const InvestmentCard: React.FC<InvestmentCardProps> = ({
@@ -29,20 +31,11 @@ export const InvestmentCard: React.FC<InvestmentCardProps> = ({
   onToggleMenu,
   onEdit,
   onDelete,
-  formatCurrency,
 }) => {
   const currentValue = investment.currentPrice * investment.quantity;
   const purchaseValue = investment.purchasePrice * investment.quantity;
   const gain = currentValue - purchaseValue;
   const gainPercentage = ((currentValue / purchaseValue) - 1) * 100;
-
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
 
   const menuActions = [
     {
@@ -60,7 +53,7 @@ export const InvestmentCard: React.FC<InvestmentCardProps> = ({
   ];
 
   return (
-    <View className="bg-white rounded-xl shadow-sm border border-neutral-100">
+    <Card>
       <View className="p-4">
         <View className="flex-row justify-between items-start">
           <View className="flex-1">
@@ -111,6 +104,6 @@ export const InvestmentCard: React.FC<InvestmentCardProps> = ({
           </Text>
         </View>
       </View>
-    </View>
+    </Card>
   );
 };
