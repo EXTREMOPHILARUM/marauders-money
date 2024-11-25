@@ -119,7 +119,7 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({
     : additionalInfo?.value;
 
   return (
-    <View className={`${scheme.background} p-4 rounded-xl`}>
+    <View className={`p-4 mx-4 mb-4 rounded-xl ${scheme.background}`}>
       <View className="flex-row items-center justify-between mb-2">
         <View className="flex-row items-center">
           {showIcon && (

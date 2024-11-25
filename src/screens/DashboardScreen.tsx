@@ -181,22 +181,20 @@ const DashboardScreen = () => {
     totalBalance, 
     totalInvestments 
   }) => (
-    <View className="mx-4 mb-6">
-      <SummaryCard
-        title="Total Net Worth"
-        value={formatCurrency(totalBalance + totalInvestments)}
-        colorScheme="primary"
-        additionalInfo={{
-          label: 'Balance',
-          value: formatCurrency(totalBalance)
-        }}
-        type="investment"
-        change={{
-          value: totalInvestments,
-          percentage: (totalInvestments / (totalBalance + totalInvestments)) * 100
-        }}
-      />
-    </View>
+    <SummaryCard
+      title="Total Net Worth"
+      value={formatCurrency(totalBalance + totalInvestments)}
+      colorScheme="primary"
+      additionalInfo={{
+        label: 'Balance',
+        value: formatCurrency(totalBalance)
+      }}
+      type="investment"
+      change={{
+        value: totalInvestments,
+        percentage: (totalInvestments / (totalBalance + totalInvestments)) * 100
+      }}
+    />
   );
 
   const MonthlyOverviewCard: React.FC<{ income: number; expenses: number }> = ({ 
