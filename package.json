@@ -21,8 +21,10 @@
     "ios:device": "react-native run-ios --device",
     "ios:iphone14": "react-native run-ios --simulator='iPhone 14'",
     "android:clean-run": "cd android && ./gradlew clean && cd .. && react-native run-android",
-    "android:release": "cd android && ./gradlew assembleRelease && cd ..",
+    "android:release": "source .env && cd android && ./gradlew assembleRelease && cd ..",
     "android:bundle": "cd android && ./gradlew bundleRelease && cd ..",
+    "android:create-keystore": "./scripts/create-keystore.sh",
+    "android:encode-keystore": "./scripts/encode-keystore.sh",
     "postinstall": "patch-package"
   },
   "dependencies": {
