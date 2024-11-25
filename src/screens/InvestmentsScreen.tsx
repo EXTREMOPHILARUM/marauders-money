@@ -1,17 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Platform } from 'react-native';
+import { 
+  View, 
+  RefreshControl,
+  Platform,
+  Alert,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import { useApp } from '../context/AppContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { InvestmentForm } from '../components/forms/InvestmentForm';
+import { InvestmentCard } from '../components/list/InvestmentCard';
+import { generateUUID } from '../utils/uuid';
+import { formatCurrency } from '../utils/formatters';
+import { ScreenHeader } from '../components/common/ScreenHeader';
+import { AddItemButton } from '../components/common/AddItemButton';
+import { FormModal } from '../components/common/FormModal';
+import { SummaryCard } from '../components/common/SummaryCard';
+import { EmptyState } from '../components/common/EmptyState';
+import { ListContainer } from '../components/common/ListContainer';
 
 interface Investment {
   id: string;
   symbol: string;
   name: string;
-  quantity: number;
+  shares: number;
+  price: number;
   purchasePrice: number;
-  currentPrice: number;
-  purchaseDate: number;
+  notes?: string;
 }
 
 const InvestmentsScreen = () => {
@@ -20,7 +35,10 @@ const InvestmentsScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [totalValue, setTotalValue] = useState(0);
   const [totalGain, setTotalGain] = useState(0);
-  const insets = useSafeAreaInsets();
+  const [isFormVisible, setIsFormVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editInvestment, setEditInvestment] = useState<Investment | null>(null);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   const fetchInvestments = async () => {
     if (!database) return;
@@ -29,19 +47,19 @@ const InvestmentsScreen = () => {
       id: inv.id,
       symbol: inv.symbol,
       name: inv.name,
-      quantity: inv.quantity,
+      shares: inv.shares,
+      price: inv.price,
       purchasePrice: inv.purchasePrice,
-      currentPrice: inv.currentPrice,
-      purchaseDate: inv.purchaseDate,
+      notes: inv.notes,
     }));
     
     setInvestments(investmentsList);
     
     // Calculate totals
     const value = investmentsList.reduce((sum, inv) => 
-      sum + (inv.currentPrice * inv.quantity), 0);
+      sum + (inv.price * inv.shares), 0);
     const cost = investmentsList.reduce((sum, inv) => 
-      sum + (inv.purchasePrice * inv.quantity), 0);
+      sum + (inv.purchasePrice * inv.shares), 0);
     
     setTotalValue(value);
     setTotalGain(value - cost);
@@ -57,6 +75,82 @@ const InvestmentsScreen = () => {
     fetchInvestments();
   }, [database]);
 
+  const handleCreateInvestment = async (investmentData: Omit<Investment, 'id'>) => {
+    if (!database) return;
+
+    try {
+      setIsSubmitting(true);
+
+      if (editInvestment) {
+        await database.investments.findOne(editInvestment.id).update({
+          $set: {
+            ...investmentData,
+            lastUpdated: Date.now(),
+          }
+        });
+      } else {
+        const newInvestment = {
+          ...investmentData,
+          id: generateUUID('investment'),
+          lastUpdated: Date.now(),
+        };
+        await database.investments.insert(newInvestment);
+      }
+
+      await fetchInvestments();
+      setIsFormVisible(false);
+      setEditInvestment(null);
+    } catch (error) {
+      console.error('Failed to save investment:', error);
+      Alert.alert('Error', 'Failed to save investment');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEditInvestment = (investment: Investment) => {
+    setEditInvestment(investment);
+    setIsFormVisible(true);
+  };
+
+  const handleDeleteInvestment = async (investmentId: string) => {
+    if (!database) return;
+    
+    try {
+      const investment = await database.investments.findOne(investmentId).exec();
+      if (!investment) {
+        throw new Error('Investment not found');
+      }
+      
+      Alert.alert(
+        'Delete Investment',
+        'Are you sure you want to delete this investment? This action cannot be undone.',
+        [
+          {
+            text: 'Cancel',
+            style: 'cancel',
+          },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await investment.remove();
+                await fetchInvestments();
+              } catch (error) {
+                console.error('Error deleting investment:', error);
+                Alert.alert('Error', 'Failed to delete investment');
+              }
+            },
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Error deleting investment:', error);
+      Alert.alert('Error', 'Failed to delete investment');
+    }
+  };
+
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-background">
@@ -66,107 +160,77 @@ const InvestmentsScreen = () => {
   }
 
   return (
-    <View className="flex-1 bg-background">
-      <ScrollView 
-        className="flex-1"
-        contentContainerStyle={{
-          paddingBottom: Platform.select({ ios: insets.bottom + 90, android: 90 })
-        }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {/* Header Section */}
-        <View className="px-4 pt-6 pb-4">
-          <Text className="text-2xl font-bold text-neutral-900 mb-1">Investments</Text>
-          <Text className="text-sm text-neutral-500">
-            {investments.length} {investments.length === 1 ? 'investment' : 'investments'} total
-          </Text>
-        </View>
-
-        {/* Portfolio Overview Card */}
-        <View className="mx-4 mb-6">
-          <View className="bg-primary-600 rounded-2xl p-6 shadow-lg">
-            <Text className="text-white/80 text-sm mb-2">Portfolio Value</Text>
-            <Text className="text-white text-4xl font-bold">
-              ${totalValue.toFixed(2)}
-            </Text>
-            <View className="mt-4 flex-row items-center">
-              <View className="flex-row items-center bg-white/20 rounded-full px-3 py-1">
-                <Text className={`text-white/90 text-sm ${totalGain >= 0 ? '' : 'text-red-200'}`}>
-                  {totalGain >= 0 ? '+' : ''}{totalGain.toFixed(2)} ({((totalGain / (totalValue - totalGain)) * 100).toFixed(2)}%)
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Add Investment Button */}
-        <TouchableOpacity 
-          className="mx-4 mb-6 bg-primary-50 border-2 border-primary-600 border-dashed p-4 rounded-xl flex-row items-center justify-center"
+    <TouchableWithoutFeedback onPress={() => setActiveMenuId(null)}>
+      <View className="flex-1 bg-background">
+        <ListContainer
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
         >
-          <Ionicons name="add-circle-outline" size={24} color="#2563EB" />
-          <Text className="text-primary-600 font-semibold ml-2">Add New Investment</Text>
-        </TouchableOpacity>
+          <ScreenHeader 
+            title="Investments" 
+            count={investments.length}
+            countLabel="investments"
+          />
 
-        {/* Investments List */}
-        <View className="px-4 pb-6">
-          <Text className="text-xl font-bold text-neutral-900 mb-4">Your Investments</Text>
-          {investments.length === 0 ? (
-            <View className="bg-white rounded-xl p-6 shadow-sm border border-neutral-100">
-              <View className="items-center">
-                <Ionicons name="trending-up-outline" size={48} color="#94A3B8" />
-                <Text className="text-neutral-500 text-center mt-4 text-base">
-                  No investments added yet
-                </Text>
-                <Text className="text-neutral-400 text-center mt-2 text-sm">
-                  Start building your portfolio by adding your first investment
-                </Text>
-              </View>
-            </View>
-          ) : (
-            <View className="space-y-3">
-              {investments.map((investment) => {
-                const currentValue = investment.currentPrice * investment.quantity;
-                const purchaseValue = investment.purchasePrice * investment.quantity;
-                const gain = currentValue - purchaseValue;
-                const gainPercentage = ((currentValue / purchaseValue) - 1) * 100;
+          <SummaryCard
+            title="Portfolio Value"
+            value={formatCurrency(totalValue)}
+            change={{
+              value: totalGain,
+              percentage: totalValue > 0 ? ((totalGain / (totalValue - totalGain)) * 100) : 0,
+            }}
+            type="investment"
+          />
 
-                return (
-                  <TouchableOpacity
+          <AddItemButton
+            onPress={() => setIsFormVisible(true)}
+            label="Add New Investment"
+          />
+
+          <View className="px-4 pb-6">
+            {investments.length === 0 ? (
+              <EmptyState
+                icon="trending-up-outline"
+                title="No investments added yet"
+                description="Start building your portfolio by adding your first investment"
+              />
+            ) : (
+              <View className="space-y-3">
+                {investments.map((investment) => (
+                  <InvestmentCard
                     key={investment.id}
-                    className="bg-white rounded-xl p-4 shadow-sm border border-neutral-100"
-                  >
-                    <View className="flex-row justify-between items-center mb-2">
-                      <View>
-                        <Text className="text-lg font-bold text-neutral-900">{investment.symbol}</Text>
-                        <Text className="text-sm text-neutral-500">{investment.name}</Text>
-                      </View>
-                      <View className="items-end">
-                        <Text className="text-lg font-bold text-neutral-900">
-                          ${currentValue.toFixed(2)}
-                        </Text>
-                        <Text className={`text-sm ${gain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {gain >= 0 ? '+' : ''}{gainPercentage.toFixed(2)}%
-                        </Text>
-                      </View>
-                    </View>
-                    <View className="flex-row justify-between">
-                      <Text className="text-sm text-neutral-500">
-                        {investment.quantity} shares @ ${investment.purchasePrice.toFixed(2)}
-                      </Text>
-                      <Text className={`text-sm ${gain >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                        {gain >= 0 ? '+' : ''}${gain.toFixed(2)}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          )}
-        </View>
-      </ScrollView>
-    </View>
+                    investment={investment}
+                    isMenuActive={activeMenuId === investment.id}
+                    onToggleMenu={() => setActiveMenuId(activeMenuId === investment.id ? null : investment.id)}
+                    onEdit={handleEditInvestment}
+                    onDelete={handleDeleteInvestment}
+                    formatCurrency={formatCurrency}
+                  />
+                ))}
+              </View>
+            )}
+          </View>
+        </ListContainer>
+
+        <FormModal
+          visible={isFormVisible}
+          onClose={() => {
+            setIsFormVisible(false);
+            setEditInvestment(null);
+          }}
+          title={editInvestment ? 'Edit Investment' : 'Add New Investment'}
+          isSubmitting={isSubmitting}
+        >
+          <InvestmentForm
+            onSubmit={handleCreateInvestment}
+            isLoading={isSubmitting}
+            initialData={editInvestment}
+            isEditMode={!!editInvestment}
+          />
+        </FormModal>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 

@@ -1,36 +1,39 @@
 import React, { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { View, Text } from 'react-native';
 import { Input } from '../common/Input';
 import { Button } from '../common/Button';
 import { CurrencyInput } from '../form/CurrencyInput';
 import { DateInput } from '../form/DateInput';
+import { Select } from '../form/Select';
 
 interface GoalFormData {
   name: string;
   targetAmount: string;
   currentAmount: string;
-  targetDate: Date;
-  category: 'savings' | 'debt' | 'investment' | 'purchase';
+  deadline: Date;
+  category: 'savings' | 'debt' | 'investment' | 'purchase' | 'emergency' | 'retirement';
   priority: 'low' | 'medium' | 'high';
   notes?: string;
 }
 
 interface GoalFormProps {
-  onSubmit: (data: GoalFormData) => void;
+  onSubmit: (data: Omit<GoalFormData & { targetAmount: number; currentAmount: number }, 'id' | 'status'>) => void;
   initialData?: Partial<GoalFormData>;
   isLoading?: boolean;
+  isEditMode?: boolean;
 }
 
 export const GoalForm: React.FC<GoalFormProps> = ({
   onSubmit,
   initialData,
   isLoading = false,
+  isEditMode = false,
 }) => {
   const [formData, setFormData] = useState<GoalFormData>({
     name: initialData?.name || '',
-    targetAmount: initialData?.targetAmount || '',
-    currentAmount: initialData?.currentAmount || '0',
-    targetDate: initialData?.targetDate || new Date(new Date().setMonth(new Date().getMonth() + 6)),
+    targetAmount: initialData?.targetAmount?.toString() || '',
+    currentAmount: initialData?.currentAmount?.toString() || '0',
+    deadline: initialData?.deadline ? new Date(initialData.deadline) : new Date(new Date().setMonth(new Date().getMonth() + 6)),
     category: initialData?.category || 'savings',
     priority: initialData?.priority || 'medium',
     notes: initialData?.notes || '',
@@ -38,8 +41,20 @@ export const GoalForm: React.FC<GoalFormProps> = ({
 
   const [errors, setErrors] = useState<Partial<Record<keyof GoalFormData, string>>>({});
 
-  const categories: GoalFormData['category'][] = ['savings', 'debt', 'investment', 'purchase'];
-  const priorities: GoalFormData['priority'][] = ['low', 'medium', 'high'];
+  const categories: Array<{ label: string; value: GoalFormData['category'] }> = [
+    { label: 'Savings', value: 'savings' },
+    { label: 'Debt Repayment', value: 'debt' },
+    { label: 'Investment', value: 'investment' },
+    { label: 'Purchase', value: 'purchase' },
+    { label: 'Emergency Fund', value: 'emergency' },
+    { label: 'Retirement', value: 'retirement' },
+  ];
+
+  const priorities: Array<{ label: string; value: GoalFormData['priority'] }> = [
+    { label: 'High', value: 'high' },
+    { label: 'Medium', value: 'medium' },
+    { label: 'Low', value: 'low' },
+  ];
 
   const validate = (): boolean => {
     const newErrors: Partial<Record<keyof GoalFormData, string>> = {};
@@ -48,11 +63,27 @@ export const GoalForm: React.FC<GoalFormProps> = ({
     if (!formData.name.trim()) {
       newErrors.name = 'Goal name is required';
     }
-    if (!formData.targetAmount) {
+
+    const targetAmount = formData.targetAmount ? parseFloat(formData.targetAmount.replace(/[^0-9.-]+/g, '')) : 0;
+    if (!formData.targetAmount || formData.targetAmount.trim() === '') {
       newErrors.targetAmount = 'Target amount is required';
+    } else if (isNaN(targetAmount)) {
+      newErrors.targetAmount = 'Please enter a valid amount';
+    } else if (targetAmount <= 0) {
+      newErrors.targetAmount = 'Target amount must be greater than 0';
     }
-    if (formData.targetDate <= currentDate) {
-      newErrors.targetDate = 'Target date must be in the future';
+
+    const currentAmount = formData.currentAmount ? parseFloat(formData.currentAmount.replace(/[^0-9.-]+/g, '')) : 0;
+    if (isNaN(currentAmount)) {
+      newErrors.currentAmount = 'Please enter a valid amount';
+    } else if (currentAmount < 0) {
+      newErrors.currentAmount = 'Current amount cannot be negative';
+    } else if (currentAmount > targetAmount) {
+      newErrors.currentAmount = 'Current amount cannot exceed target amount';
+    }
+
+    if (formData.deadline <= currentDate) {
+      newErrors.deadline = 'Target date must be in the future';
     }
 
     setErrors(newErrors);
@@ -61,18 +92,30 @@ export const GoalForm: React.FC<GoalFormProps> = ({
 
   const handleSubmit = () => {
     if (validate()) {
-      onSubmit(formData);
+      const targetAmount = parseFloat(formData.targetAmount.replace(/[^0-9.-]+/g, ''));
+      const currentAmount = parseFloat(formData.currentAmount.replace(/[^0-9.-]+/g, ''));
+      
+      onSubmit({
+        name: formData.name.trim(),
+        targetAmount,
+        currentAmount,
+        deadline: formData.deadline,
+        category: formData.category,
+        priority: formData.priority,
+        notes: formData.notes?.trim(),
+      });
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View className="p-4">
       <Input
         label="Goal Name"
         value={formData.name}
         onChangeText={(text) => setFormData({ ...formData, name: text })}
         error={errors.name}
         placeholder="Enter goal name"
+        className="mb-4"
       />
 
       <CurrencyInput
@@ -80,63 +123,47 @@ export const GoalForm: React.FC<GoalFormProps> = ({
         value={formData.targetAmount}
         onChangeValue={(value) => setFormData({ ...formData, targetAmount: value })}
         error={errors.targetAmount}
+        className="mb-4"
       />
 
       <CurrencyInput
-        label="Current Progress"
+        label="Current Amount"
         value={formData.currentAmount}
         onChangeValue={(value) => setFormData({ ...formData, currentAmount: value })}
+        error={errors.currentAmount}
+        className="mb-4"
       />
 
       <DateInput
         label="Target Date"
-        value={formData.targetDate}
-        onChange={(date) => setFormData({ ...formData, targetDate: date })}
-        error={errors.targetDate}
+        value={formData.deadline}
+        onChange={(date) => setFormData({ ...formData, deadline: date })}
+        error={errors.deadline}
+        className="mb-4"
       />
 
-      <View style={styles.sectionTitle}>
-        <Text style={styles.label}>Category</Text>
-      </View>
-      <View style={styles.buttonGroup}>
-        {categories.map((category) => (
-          <Button
-            key={category}
-            title={category.charAt(0).toUpperCase() + category.slice(1)}
-            variant={formData.category === category ? 'primary' : 'outline'}
-            onPress={() => setFormData({ ...formData, category })}
-            style={styles.categoryButton}
-            size="small"
-          />
-        ))}
-      </View>
+      <Select
+        label="Category"
+        value={formData.category}
+        onValueChange={(value) => setFormData({ ...formData, category: value })}
+        items={categories}
+        className="mb-4"
+      />
 
-      <View style={styles.sectionTitle}>
-        <Text style={styles.label}>Priority</Text>
-      </View>
-      <View style={styles.buttonGroup}>
-        {priorities.map((priority) => (
-          <Button
-            key={priority}
-            title={priority.charAt(0).toUpperCase() + priority.slice(1)}
-            variant={formData.priority === priority ? 'primary' : 'outline'}
-            onPress={() => setFormData({ ...formData, priority })}
-            style={[
-              styles.priorityButton,
-              {
-                backgroundColor:
-                  formData.priority === priority
-                    ? priority === 'high'
-                      ? '#DC2626'
-                      : priority === 'medium'
-                      ? '#F59E0B'
-                      : '#10B981'
-                    : 'transparent',
-              },
-            ]}
-            size="small"
-          />
-        ))}
+      <View className="mb-4">
+        <Text className="text-sm font-medium text-neutral-900 mb-2">Priority</Text>
+        <View className="flex-row flex-wrap gap-2">
+          {priorities.map((priority) => (
+            <Button
+              key={priority.value}
+              title={priority.label}
+              variant={formData.priority === priority.value ? 'primary' : 'outline'}
+              onPress={() => setFormData({ ...formData, priority: priority.value })}
+              className="px-3 py-1"
+              size="small"
+            />
+          ))}
+        </View>
       </View>
 
       <Input
@@ -146,47 +173,18 @@ export const GoalForm: React.FC<GoalFormProps> = ({
         placeholder="Add any additional notes"
         multiline
         numberOfLines={3}
-        style={styles.notesInput}
+        className="mb-6 h-[80px]"
+        textAlignVertical="top"
       />
 
       <Button
-        title="Save Goal"
+        title={isEditMode ? "Update Goal" : "Save Goal"}
         onPress={handleSubmit}
         loading={isLoading}
-        fullWidth
+        variant="primary"
+        className="w-full bg-primary-600 active:bg-primary-700 disabled:opacity-50"
+        disabled={isLoading}
       />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-  },
-  sectionTitle: {
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  label: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
-  },
-  buttonGroup: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 16,
-  },
-  categoryButton: {
-    flex: 1,
-    minWidth: '45%',
-  },
-  priorityButton: {
-    flex: 1,
-  },
-  notesInput: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-});

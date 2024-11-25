@@ -1,6 +1,7 @@
 import React from 'react';
-import { Text, View, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
+import { Text, View, TouchableOpacity } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { MenuToggle } from '../common/MenuToggle';
 
 interface Account {
   id: string;
@@ -34,6 +35,21 @@ export const AccountCard: React.FC<AccountCardProps> = ({
 }) => {
   const { name, type, balance, lastUpdated, institution } = account;
 
+  const menuActions = [
+    {
+      icon: 'create-outline',
+      label: 'Edit',
+      onPress: () => onEdit(account),
+      color: '#2563EB',
+    },
+    {
+      icon: 'trash-outline',
+      label: 'Delete',
+      onPress: () => onDelete(account.id),
+      color: '#EF4444',
+    },
+  ];
+
   return (
     <View className="bg-white rounded-xl p-4 shadow-sm border border-neutral-100">
       <View className="flex-row justify-between items-center mb-2">
@@ -48,47 +64,17 @@ export const AccountCard: React.FC<AccountCardProps> = ({
           <Text className="text-lg font-bold text-primary-600">
             {formatCurrency(balance)}
           </Text>
-          <TouchableOpacity 
-            onPress={(e) => {
-              e.stopPropagation();
-              onToggleMenu();
-            }}
-            className="ml-4 p-2"
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Ionicons name="ellipsis-vertical" size={20} color="#64748B" />
-          </TouchableOpacity>
+          <MenuToggle
+            isActive={isMenuActive}
+            onToggle={onToggleMenu}
+            actions={menuActions}
+            menuPosition={{ top: 8, right: 0 }}
+          />
         </View>
       </View>
       <Text className="text-xs text-neutral-400">
         Last updated: {formatDate(lastUpdated)}
       </Text>
-      {isMenuActive && (
-        <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-          <View className="absolute right-0 top-0 mt-12 bg-white rounded-lg shadow-lg border border-neutral-200 z-10">
-            <TouchableOpacity 
-              onPress={() => {
-                onEdit(account);
-                onToggleMenu();
-              }}
-              className="flex-row items-center px-4 py-3 border-b border-neutral-100"
-            >
-              <Ionicons name="pencil-outline" size={20} color="#2563EB" />
-              <Text className="text-neutral-700 ml-2">Edit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={() => {
-                onDelete(account.id);
-                onToggleMenu();
-              }}
-              className="flex-row items-center px-4 py-3"
-            >
-              <Ionicons name="trash-outline" size={20} color="#EF4444" />
-              <Text className="text-red-600 ml-2">Delete</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableWithoutFeedback>
-      )}
     </View>
   );
 };

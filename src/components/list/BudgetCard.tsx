@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, TouchableWithoutFeedback } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { MenuToggle } from '../common/MenuToggle';
 
 interface Budget {
   id: string;
@@ -33,6 +34,22 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({
   onDelete,
   formatCurrency,
 }) => {
+  const menuActions = [
+    {
+      icon: 'create-outline',
+      label: 'Edit',
+      onPress: () => onEdit(budget),
+      color: '#2563EB',
+    },
+    {
+      icon: 'trash-outline',
+      label: 'Delete',
+      onPress: () => onDelete(budget.id),
+      color: '#EF4444',
+      textColor: 'text-red-600',
+    },
+  ];
+
   return (
     <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
       <View className="bg-white rounded-xl p-4 shadow-sm border border-neutral-100">
@@ -47,16 +64,12 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({
                 <Text className="text-lg font-bold text-neutral-900 mr-2">
                   {formatCurrency(budget.amount)}
                 </Text>
-                <TouchableOpacity 
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    onToggleMenu();
-                  }}
-                  className="p-2"
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Ionicons name="ellipsis-vertical" size={20} color="#64748B" />
-                </TouchableOpacity>
+                <MenuToggle
+                  isActive={isMenuActive}
+                  onToggle={onToggleMenu}
+                  actions={menuActions}
+                  menuPosition={{ top: 8, right: 0 }}
+                />
               </View>
               <Text className="text-sm text-neutral-500">
                 {formatCurrency(budget.spent || 0)} spent
@@ -78,30 +91,6 @@ export const BudgetCard: React.FC<BudgetCardProps> = ({
                 style={{ width: `${budget.progress || 0}%` }}
               />
             </View>
-            {isMenuActive && (
-              <TouchableWithoutFeedback onPress={(e) => e.stopPropagation()}>
-                <View className="absolute right-0 top-0 mt-8 bg-white rounded-lg shadow-lg border border-neutral-200 z-10">
-                  <TouchableOpacity 
-                    onPress={() => {
-                      onEdit(budget);
-                    }}
-                    className="flex-row items-center px-4 py-3 border-b border-neutral-100"
-                  >
-                    <Ionicons name="pencil-outline" size={20} color="#2563EB" />
-                    <Text className="text-neutral-700 ml-2">Edit</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    onPress={() => {
-                      onDelete(budget.id);
-                    }}
-                    className="flex-row items-center px-4 py-3"
-                  >
-                    <Ionicons name="trash-outline" size={20} color="#EF4444" />
-                    <Text className="text-red-600 ml-2">Delete</Text>
-                  </TouchableOpacity>
-                </View>
-              </TouchableWithoutFeedback>
-            )}
           </View>
         </View>
       </View>

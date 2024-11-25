@@ -286,6 +286,20 @@ export const goalSchema = {
       minimum: 0,
       maximum: 9999999999999
     },
+    category: {
+      type: 'string',
+      enum: ['savings', 'debt', 'investment', 'purchase', 'emergency', 'retirement'],
+      maxLength: 20
+    },
+    priority: {
+      type: 'string',
+      enum: ['low', 'medium', 'high'],
+      maxLength: 10
+    },
+    notes: {
+      type: 'string',
+      maxLength: 500
+    },
     status: {
       type: 'string',
       enum: ['not_started', 'in_progress', 'completed', 'cancelled'],
@@ -304,6 +318,6 @@ export const goalSchema = {
       maximum: 9999999999999
     },
   },
-  required: ['id', 'name', 'targetAmount', 'currency', 'deadline'],
-  indexes: ['status', 'deadline']
+  required: ['id', 'name', 'targetAmount', 'currency', 'deadline', 'category', 'priority'],
+  indexes: ['status', 'deadline', 'category', 'priority']
 };
