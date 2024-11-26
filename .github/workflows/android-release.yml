@@ -69,17 +69,11 @@ jobs:
         run: |
           echo "$RELEASE_KEYSTORE" | base64 -d > android/app/release.keystore
 
-      - name: Create .env file
+      - name: Build Release APK and Bundle
         env:
           ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          echo "ANDROID_STORE_PASSWORD=$ANDROID_STORE_PASSWORD" > .env
-          echo "ANDROID_KEY_ALIAS=$ANDROID_KEY_ALIAS" >> .env
-          echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> .env
-
-      - name: Build Release APK and Bundle
         run: npm run android:build-release
 
       - name: Create Release
