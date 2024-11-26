@@ -96,9 +96,9 @@ android {
             def releaseStoreFile = file("release.keystore")
             if (releaseStoreFile.exists()) {
                 storeFile releaseStoreFile
-                storePassword System.getenv("ANDROID_STORE_PASSWORD") ?: project.findProperty("MYAPP_RELEASE_STORE_PASSWORD")
-                keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: project.findProperty("MYAPP_RELEASE_KEY_ALIAS")
-                keyPassword System.getenv("ANDROID_KEY_PASSWORD") ?: project.findProperty("MYAPP_RELEASE_KEY_PASSWORD")
+                storePassword System.getenv("ANDROID_STORE_PASSWORD") ?: project.findProperty("ANDROID_STORE_PASSWORD")
+                keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: project.findProperty("ANDROID_KEY_ALIAS")
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD") ?: project.findProperty("ANDROID_KEY_PASSWORD")
             } else {
                 logger.warn("Release keystore file not found: " + releaseStoreFile.absolutePath)
             }
