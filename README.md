@@ -110,7 +110,7 @@ All styling is implemented using NativeWind (Tailwind CSS for React Native), pro
 
 ## GitHub Actions Release
 
-The project includes a GitHub Actions workflow that automatically builds and releases the app when you push a new version tag. Here's how to set it up:
+The project includes a GitHub Actions workflow that can be manually triggered to create a release. Here's how to set it up:
 
 1. Encode your keystore for GitHub secrets:
    ```bash
@@ -130,15 +130,20 @@ The project includes a GitHub Actions workflow that automatically builds and rel
    3. Click "New repository secret"
    4. Add each secret with its corresponding value
 
-3. Create and push a new version tag to trigger a release:
-   ```bash
-   git tag v1.0.0  # Use appropriate version number
-   git push origin v1.0.0
-   ```
+3. Create a new release:
+   1. Go to the "Actions" tab in your GitHub repository
+   2. Select the "Android Release" workflow
+   3. Click "Run workflow"
+   4. Fill in the required parameters:
+      - Version number (e.g., 1.0.0)
+      - Branch to create release from (defaults to main)
+      - Release notes (optional)
+   5. Click "Run workflow"
 
 The workflow will:
+- Create a new tag for the specified version
 - Build both APK and AAB files
-- Create a new GitHub release
+- Create a GitHub release with the specified version
 - Attach the built files to the release
 
 The APK can be downloaded and installed directly on Android devices, while the AAB is for Play Store submission.
@@ -234,4 +239,17 @@ npm test -- --watch
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details
+This project is licensed under the Mozilla Public License Version 2.0 - see the [LICENSE](LICENSE) file for details.
+
+The Mozilla Public License Version 2.0 is a copyleft license that is easy to comply with. It allows you to:
+- Use the code commercially
+- Distribute
+- Modify
+- Patent use
+- Private use
+
+While requiring you to:
+- Disclose source
+- Include license
+- Include copyright
+- State changes

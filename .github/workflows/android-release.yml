@@ -1,9 +1,22 @@
 name: Android Release
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.0)'
+        required: true
+        type: string
+      branch:
+        description: 'Branch to create release from'
+        required: true
+        default: 'main'
+        type: string
+      notes:
+        description: 'Release notes'
+        required: false
+        type: string
+        default: 'No release notes provided'
 
 jobs:
   build:
@@ -14,6 +27,15 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: Create and push tag
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git tag -a v${{ github.event.inputs.version }} -m "Release v${{ github.event.inputs.version }}"
+          git push origin v${{ github.event.inputs.version }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -57,29 +79,18 @@ jobs:
           echo "ANDROID_KEY_ALIAS=$ANDROID_KEY_ALIAS" >> .env
           echo "ANDROID_KEY_PASSWORD=$ANDROID_KEY_PASSWORD" >> .env
 
-      - name: Build Release APK
-        run: |
-          cd android
-          ./gradlew assembleRelease
-
-      - name: Build Release Bundle
-        run: |
-          cd android
-          ./gradlew bundleRelease
-
-      - name: Get version from tag
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: Build Release APK and Bundle
+        run: npm run android:build-release
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          name: Release ${{ steps.get_version.outputs.VERSION }}
-          files: |
-            android/app/build/outputs/apk/release/app-release.apk
-            android/app/build/outputs/bundle/release/app-release.aab
+          name: Release v${{ github.event.inputs.version }}
+          tag_name: v${{ github.event.inputs.version }}
           body: |
-            Release ${{ steps.get_version.outputs.VERSION }}
+            Release v${{ github.event.inputs.version }}
+            
+            ${{ github.event.inputs.notes }}
             
             ### Installation
             - Download and install the APK on your Android device
@@ -87,3 +98,6 @@ jobs:
             
             ### Note
             The AAB file is for Play Store submission only. For direct installation, use the APK.
+          files: |
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/bundle/release/app-release.aab
